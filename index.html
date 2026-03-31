@@ -1,0 +1,1167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CarXray.ai — AI Car Damage Analysis</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --black: #0a0a0a;
+    --white: #f5f3ee;
+    --accent: #e8ff47;
+    --accent2: #ff6b35;
+    --gray: #1a1a1a;
+    --gray2: #2a2a2a;
+    --gray3: #3a3a3a;
+    --muted: #888;
+    --text: #f5f3ee;
+    --red: #ff4444;
+    --green: #44ff88;
+    --yellow: #ffcc44;
+    --border: rgba(245,243,238,0.08);
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--black);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  /* ── NOISE TEXTURE ── */
+  body::before {
+    content:'';
+    position:fixed; inset:0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events:none; z-index:0;
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed; top:0; left:0; right:0; z-index:100;
+    display:flex; align-items:center; justify-content:space-between;
+    padding: 20px 48px;
+    background: rgba(10,10,10,0.85);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border);
+  }
+  .logo {
+    font-family: 'Syne', sans-serif;
+    font-size: 20px; font-weight: 800;
+    letter-spacing: -0.5px;
+  }
+  .logo span { color: var(--accent); }
+  .nav-links { display:flex; gap:32px; align-items:center; }
+  .nav-links a {
+    color: var(--muted); text-decoration:none; font-size:14px;
+    transition: color 0.2s;
+  }
+  .nav-links a:hover { color: var(--text); }
+  .nav-cta {
+    background: var(--accent); color: var(--black);
+    padding: 10px 22px; border-radius: 8px;
+    font-weight: 500; font-size: 14px; text-decoration: none;
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .nav-cta:hover { transform: translateY(-1px); box-shadow: 0 4px 20px rgba(232,255,71,0.3); color: var(--black)!important; }
+
+  /* ── SECTIONS ── */
+  section { position: relative; z-index: 1; }
+
+  /* ── HERO ── */
+  .hero {
+    min-height: 100vh;
+    display:flex; flex-direction:column; justify-content:center;
+    padding: 140px 48px 80px;
+    overflow: hidden;
+  }
+  .hero-tag {
+    display:inline-flex; align-items:center; gap:8px;
+    background: rgba(232,255,71,0.1); border: 1px solid rgba(232,255,71,0.2);
+    color: var(--accent); font-size:12px; font-weight:500; letter-spacing:0.08em; text-transform:uppercase;
+    padding: 6px 14px; border-radius:100px; margin-bottom:32px;
+    width: fit-content;
+  }
+  .hero-tag::before { content:'●'; font-size:8px; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+  h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(48px, 7vw, 88px);
+    font-weight: 800;
+    line-height: 1.0;
+    letter-spacing: -2px;
+    max-width: 900px;
+    margin-bottom: 28px;
+  }
+  h1 em { color: var(--accent); font-style: normal; }
+  .hero-sub {
+    font-size: 18px; color: var(--muted); max-width: 520px;
+    font-weight: 300; line-height: 1.7; margin-bottom: 48px;
+  }
+  .hero-actions { display:flex; gap:16px; align-items:center; flex-wrap:wrap; }
+  .btn-primary {
+    background: var(--accent); color: var(--black);
+    padding: 16px 32px; border-radius: 10px;
+    font-size: 15px; font-weight: 600; text-decoration:none;
+    transition: all 0.2s; display:inline-flex; align-items:center; gap:8px;
+    border: none; cursor: pointer; font-family:'DM Sans',sans-serif;
+  }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(232,255,71,0.35); }
+  .btn-ghost {
+    color: var(--muted); font-size:15px; text-decoration:none;
+    display:inline-flex; align-items:center; gap:8px;
+    transition: color 0.2s; background:none; border:none; cursor:pointer;
+    font-family:'DM Sans',sans-serif;
+  }
+  .btn-ghost:hover { color: var(--text); }
+
+  .hero-stats {
+    display:flex; gap:48px; margin-top:80px;
+    padding-top:48px; border-top: 1px solid var(--border);
+    flex-wrap:wrap;
+  }
+  .stat-item { }
+  .stat-num {
+    font-family:'Syne',sans-serif; font-size:36px; font-weight:800;
+    color: var(--text);
+  }
+  .stat-num span { color: var(--accent); }
+  .stat-label { color: var(--muted); font-size:13px; margin-top:2px; }
+
+  /* BG GRID */
+  .hero-grid {
+    position:absolute; inset:0;
+    background-image: linear-gradient(rgba(245,243,238,0.03) 1px, transparent 1px),
+                      linear-gradient(90deg, rgba(245,243,238,0.03) 1px, transparent 1px);
+    background-size: 60px 60px;
+    pointer-events:none;
+  }
+  .hero-glow {
+    position:absolute; top:-200px; right:-100px;
+    width: 700px; height: 700px;
+    background: radial-gradient(circle, rgba(232,255,71,0.06) 0%, transparent 70%);
+    pointer-events:none;
+  }
+
+  /* ── HOW IT WORKS ── */
+  .how {
+    padding: 120px 48px;
+    border-top: 1px solid var(--border);
+  }
+  .section-label {
+    font-size:12px; font-weight:500; letter-spacing:0.12em; text-transform:uppercase;
+    color: var(--accent); margin-bottom:16px;
+  }
+  h2 {
+    font-family:'Syne',sans-serif; font-size: clamp(32px,4vw,52px);
+    font-weight:800; letter-spacing:-1px; line-height:1.1;
+    margin-bottom:64px; max-width:600px;
+  }
+  .steps {
+    display:grid; grid-template-columns: repeat(auto-fit, minmax(240px,1fr));
+    gap:2px;
+  }
+  .step {
+    background: var(--gray); padding: 40px 32px;
+    transition: background 0.2s;
+    position: relative; overflow: hidden;
+  }
+  .step:hover { background: var(--gray2); }
+  .step:first-child { border-radius: 12px 0 0 12px; }
+  .step:last-child { border-radius: 0 12px 12px 0; }
+  .step-num {
+    font-family:'Syne',sans-serif; font-size:72px; font-weight:800;
+    color: rgba(245,243,238,0.05); position:absolute; top:16px; right:24px;
+    line-height:1;
+  }
+  .step-icon {
+    width:48px; height:48px; background: rgba(232,255,71,0.1);
+    border-radius:10px; display:flex; align-items:center; justify-content:center;
+    font-size:22px; margin-bottom:20px;
+  }
+  .step h3 { font-family:'Syne',sans-serif; font-size:18px; font-weight:700; margin-bottom:10px; }
+  .step p { color: var(--muted); font-size:14px; line-height:1.7; }
+
+  /* ── DEMO ── */
+  .demo-section {
+    padding: 120px 48px;
+    background: var(--gray);
+    border-top: 1px solid var(--border);
+  }
+  .demo-container {
+    max-width: 860px; margin: 0 auto;
+  }
+  .demo-input-box {
+    background: var(--black); border: 1px solid var(--border);
+    border-radius: 16px; padding: 32px;
+    margin-bottom: 32px;
+  }
+  .demo-label { font-size:13px; color:var(--muted); margin-bottom:12px; font-weight:500; }
+  .url-input-row {
+    display:flex; gap:12px; align-items:stretch;
+  }
+  .url-input {
+    flex:1; background: var(--gray2); border: 1px solid var(--border);
+    color: var(--text); font-family:'DM Sans',sans-serif;
+    font-size:14px; padding: 14px 18px; border-radius:10px;
+    outline:none; transition: border-color 0.2s;
+  }
+  .url-input:focus { border-color: rgba(232,255,71,0.4); }
+  .url-input::placeholder { color: var(--muted); }
+  .source-badges { display:flex; gap:8px; margin-top:12px; flex-wrap:wrap; }
+  .badge {
+    font-size:11px; padding:4px 10px; border-radius:100px; font-weight:500;
+    border: 1px solid;
+  }
+  .badge-copart { border-color: rgba(232,255,71,0.3); color:var(--accent); background:rgba(232,255,71,0.05); }
+  .badge-iaai { border-color: rgba(255,107,53,0.3); color:var(--accent2); background:rgba(255,107,53,0.05); }
+
+  /* ── REPORT PREVIEW ── */
+  .report-card {
+    background: var(--black); border: 1px solid var(--border);
+    border-radius:16px; overflow:hidden;
+  }
+  .report-header {
+    padding:24px 28px; border-bottom:1px solid var(--border);
+    display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;
+  }
+  .report-title { font-family:'Syne',sans-serif; font-size:18px; font-weight:700; }
+  .report-meta { color:var(--muted); font-size:13px; margin-top:3px; }
+  .score-badge {
+    font-family:'Syne',sans-serif; font-size:32px; font-weight:800;
+    width:72px; height:72px; border-radius:12px;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .score-high { background:rgba(255,68,68,0.1); color:var(--red); border:1px solid rgba(255,68,68,0.2); }
+  .score-med { background:rgba(255,204,68,0.1); color:var(--yellow); border:1px solid rgba(255,204,68,0.2); }
+  .score-low { background:rgba(68,255,136,0.1); color:var(--green); border:1px solid rgba(68,255,136,0.2); }
+
+  .report-body { padding:28px; }
+  .damage-grid {
+    display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:24px;
+  }
+  .damage-item {
+    background:var(--gray); border-radius:10px; padding:16px;
+    border-left: 3px solid;
+  }
+  .damage-critical { border-color: var(--red); }
+  .damage-warning { border-color: var(--yellow); }
+  .damage-ok { border-color: var(--green); }
+  .damage-item-label { font-size:11px; font-weight:500; text-transform:uppercase; letter-spacing:0.06em; color:var(--muted); margin-bottom:4px; }
+  .damage-item-val { font-size:14px; font-weight:500; }
+
+  .cost-row {
+    background:var(--gray); border-radius:10px; padding:20px 24px;
+    display:flex; justify-content:space-between; align-items:center;
+    margin-bottom:12px;
+  }
+  .cost-label { font-size:14px; color:var(--muted); }
+  .cost-value { font-family:'Syne',sans-serif; font-size:18px; font-weight:700; }
+  .cost-total {
+    background: rgba(232,255,71,0.05); border:1px solid rgba(232,255,71,0.15);
+    border-radius:10px; padding:20px 24px;
+    display:flex; justify-content:space-between; align-items:center;
+  }
+  .cost-total .cost-label { color:var(--text); font-weight:500; }
+  .cost-total .cost-value { color:var(--accent); font-size:24px; }
+
+  .bid-rec {
+    margin-top:24px; padding:20px 24px;
+    background:rgba(232,255,71,0.04); border:1px solid rgba(232,255,71,0.12);
+    border-radius:10px;
+  }
+  .bid-rec-label { font-size:12px; color:var(--accent); font-weight:500; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:6px; }
+  .bid-rec-text { font-size:14px; color:var(--muted); line-height:1.7; }
+  .bid-rec-amount { font-family:'Syne',sans-serif; font-size:28px; font-weight:800; color:var(--text); margin-top:8px; }
+
+  /* ── PRICING ── */
+  .pricing {
+    padding: 120px 48px;
+    border-top: 1px solid var(--border);
+  }
+  .pricing-grid {
+    display:grid; grid-template-columns: repeat(auto-fit, minmax(280px,1fr));
+    gap:16px; max-width:960px;
+  }
+  .plan {
+    background:var(--gray); border:1px solid var(--border);
+    border-radius:16px; padding:36px 32px;
+    transition: transform 0.2s, border-color 0.2s;
+    position:relative;
+  }
+  .plan:hover { transform:translateY(-4px); }
+  .plan.featured {
+    border-color: rgba(232,255,71,0.3);
+    background: linear-gradient(135deg, var(--gray) 0%, rgba(232,255,71,0.04) 100%);
+  }
+  .plan-tag {
+    position:absolute; top:-12px; left:32px;
+    background:var(--accent); color:var(--black);
+    font-size:11px; font-weight:700; letter-spacing:0.06em; text-transform:uppercase;
+    padding:4px 12px; border-radius:100px;
+  }
+  .plan-name { font-family:'Syne',sans-serif; font-size:14px; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; color:var(--muted); margin-bottom:16px; }
+  .plan-price { font-family:'Syne',sans-serif; font-size:48px; font-weight:800; line-height:1; margin-bottom:4px; }
+  .plan-price sup { font-size:24px; vertical-align:super; }
+  .plan-desc { color:var(--muted); font-size:13px; margin-bottom:28px; }
+  .plan-features { list-style:none; margin-bottom:32px; }
+  .plan-features li { font-size:14px; color:var(--muted); padding:8px 0; border-bottom:1px solid var(--border); display:flex; gap:8px; align-items:center; }
+  .plan-features li::before { content:'✓'; color:var(--accent); font-weight:700; font-size:12px; flex-shrink:0; }
+  .plan-features li.na { opacity:0.4; }
+  .plan-features li.na::before { content:'—'; color:var(--muted); }
+  .plan-btn {
+    width:100%; padding:14px; border-radius:10px;
+    font-size:14px; font-weight:600; cursor:pointer;
+    font-family:'DM Sans',sans-serif; transition:all 0.2s;
+    border:none;
+  }
+  .plan-btn-accent { background:var(--accent); color:var(--black); }
+  .plan-btn-accent:hover { box-shadow:0 4px 20px rgba(232,255,71,0.3); transform:translateY(-1px); }
+  .plan-btn-ghost { background:transparent; color:var(--text); border:1px solid var(--border); }
+  .plan-btn-ghost:hover { border-color:rgba(245,243,238,0.3); }
+
+  /* ── AUTH MODAL ── */
+  .modal-overlay {
+    position:fixed; inset:0; background:rgba(0,0,0,0.8);
+    backdrop-filter:blur(8px); z-index:200;
+    display:flex; align-items:center; justify-content:center;
+    opacity:0; pointer-events:none; transition:opacity 0.25s;
+  }
+  .modal-overlay.active { opacity:1; pointer-events:all; }
+  .modal {
+    background:var(--gray); border:1px solid var(--border);
+    border-radius:20px; padding:40px; width:100%; max-width:440px;
+    margin:24px; transform:translateY(20px); transition:transform 0.25s;
+    position:relative;
+  }
+  .modal-overlay.active .modal { transform:translateY(0); }
+  .modal-close {
+    position:absolute; top:16px; right:16px;
+    background:var(--gray2); border:none; color:var(--muted);
+    width:32px; height:32px; border-radius:8px; cursor:pointer;
+    font-size:16px; display:flex; align-items:center; justify-content:center;
+    transition:color 0.2s;
+  }
+  .modal-close:hover { color:var(--text); }
+  .modal-logo { font-family:'Syne',sans-serif; font-size:22px; font-weight:800; margin-bottom:8px; }
+  .modal-logo span { color:var(--accent); }
+  .modal-subtitle { color:var(--muted); font-size:14px; margin-bottom:32px; }
+  .modal-tabs { display:flex; background:var(--black); border-radius:10px; padding:4px; margin-bottom:28px; }
+  .modal-tab {
+    flex:1; padding:10px; text-align:center; font-size:14px; font-weight:500;
+    border-radius:8px; cursor:pointer; border:none; background:none; color:var(--muted);
+    transition:all 0.2s; font-family:'DM Sans',sans-serif;
+  }
+  .modal-tab.active { background:var(--gray2); color:var(--text); }
+  .form-group { margin-bottom:16px; }
+  .form-label { font-size:12px; font-weight:500; color:var(--muted); margin-bottom:6px; display:block; letter-spacing:0.04em; }
+  .form-input {
+    width:100%; background:var(--black); border:1px solid var(--border);
+    color:var(--text); font-family:'DM Sans',sans-serif; font-size:14px;
+    padding:12px 16px; border-radius:10px; outline:none; transition:border-color 0.2s;
+  }
+  .form-input:focus { border-color:rgba(232,255,71,0.4); }
+  .form-divider { text-align:center; color:var(--muted); font-size:13px; margin:20px 0; position:relative; }
+  .form-divider::before, .form-divider::after {
+    content:''; position:absolute; top:50%; width:calc(50% - 24px); height:1px; background:var(--border);
+  }
+  .form-divider::before { left:0; } .form-divider::after { right:0; }
+  .oauth-btn {
+    width:100%; padding:12px; border-radius:10px; border:1px solid var(--border);
+    background:var(--black); color:var(--text); font-family:'DM Sans',sans-serif;
+    font-size:14px; cursor:pointer; display:flex; align-items:center; justify-content:center;
+    gap:10px; margin-bottom:10px; transition:border-color 0.2s;
+  }
+  .oauth-btn:hover { border-color:rgba(245,243,238,0.25); }
+
+  /* ── DASHBOARD VIEW ── */
+  .dashboard {
+    display:none; min-height:100vh;
+    padding-top:80px;
+  }
+  .dashboard.active { display:block; }
+  .dash-header {
+    padding:32px 48px; border-bottom:1px solid var(--border);
+    display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;
+  }
+  .dash-title { font-family:'Syne',sans-serif; font-size:24px; font-weight:800; }
+  .dash-subtitle { color:var(--muted); font-size:14px; margin-top:2px; }
+  .credits-badge {
+    background:rgba(232,255,71,0.1); border:1px solid rgba(232,255,71,0.2);
+    border-radius:10px; padding:10px 18px;
+    font-family:'Syne',sans-serif; font-size:18px; font-weight:700; color:var(--accent);
+  }
+  .credits-badge span { font-size:12px; color:var(--muted); font-family:'DM Sans',sans-serif; font-weight:400; display:block; }
+  .dash-content { padding:48px; }
+  .new-analysis-box {
+    background:var(--gray); border:1px solid var(--border);
+    border-radius:16px; padding:36px; margin-bottom:40px;
+  }
+  .new-analysis-box h3 { font-family:'Syne',sans-serif; font-size:20px; font-weight:700; margin-bottom:6px; }
+  .new-analysis-box p { color:var(--muted); font-size:14px; margin-bottom:24px; }
+  .reports-grid {
+    display:grid; grid-template-columns: repeat(auto-fill, minmax(320px,1fr));
+    gap:16px;
+  }
+  .report-thumb {
+    background:var(--gray); border:1px solid var(--border);
+    border-radius:12px; padding:24px; cursor:pointer;
+    transition:all 0.2s;
+  }
+  .report-thumb:hover { border-color:rgba(245,243,238,0.2); transform:translateY(-2px); }
+  .rt-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:16px; }
+  .rt-car { font-family:'Syne',sans-serif; font-size:16px; font-weight:700; }
+  .rt-date { font-size:12px; color:var(--muted); }
+  .rt-damage { font-size:13px; color:var(--muted); margin-bottom:16px; }
+  .rt-footer { display:flex; justify-content:space-between; align-items:center; }
+  .rt-cost { font-family:'Syne',sans-serif; font-size:20px; font-weight:800; }
+  .rt-status { font-size:11px; padding:3px 8px; border-radius:100px; font-weight:500; }
+  .status-high { background:rgba(255,68,68,0.1); color:var(--red); border:1px solid rgba(255,68,68,0.2); }
+  .status-med { background:rgba(255,204,68,0.1); color:var(--yellow); border:1px solid rgba(255,204,68,0.2); }
+  .status-low { background:rgba(68,255,136,0.1); color:var(--green); border:1px solid rgba(68,255,136,0.2); }
+  .progress-bar { height:3px; background:var(--gray2); border-radius:2px; margin-top:12px; overflow:hidden; }
+  .progress-fill { height:100%; border-radius:2px; transition:width 1s ease; }
+
+  /* ── LANG SWITCH ── */
+  .lang-switch {
+    display:flex; background:var(--gray2); border-radius:8px; padding:3px;
+  }
+  .lang-btn {
+    padding:5px 12px; font-size:12px; font-weight:500; cursor:pointer;
+    border:none; background:none; color:var(--muted); border-radius:6px;
+    transition:all 0.15s; font-family:'DM Sans',sans-serif;
+  }
+  .lang-btn.active { background:var(--gray3); color:var(--text); }
+
+  /* ── LOADING ANIMATION ── */
+  .analyzing-overlay {
+    display:none; position:fixed; inset:0; z-index:300;
+    background:rgba(10,10,10,0.95); backdrop-filter:blur(16px);
+    flex-direction:column; align-items:center; justify-content:center;
+    gap:24px;
+  }
+  .analyzing-overlay.active { display:flex; }
+  .spinner {
+    width:64px; height:64px; border:2px solid var(--gray2);
+    border-top-color:var(--accent); border-radius:50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform:rotate(360deg); } }
+  .analyzing-text { font-family:'Syne',sans-serif; font-size:18px; font-weight:700; }
+  .analyzing-steps { display:flex; flex-direction:column; gap:8px; text-align:center; }
+  .analyzing-step { font-size:13px; color:var(--muted); display:flex; align-items:center; gap:8px; justify-content:center; }
+  .analyzing-step.done { color:var(--accent); }
+  .analyzing-step.done::before { content:'✓'; }
+  .analyzing-step.active { color:var(--text); }
+  .analyzing-step.active::before { content:'›'; animation: blink 0.8s infinite; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+  /* ── FOOTER ── */
+  footer {
+    padding:48px; border-top:1px solid var(--border);
+    display:flex; justify-content:space-between; align-items:center;
+    flex-wrap:wrap; gap:16px;
+  }
+  footer .logo { font-size:16px; }
+  .footer-links { display:flex; gap:24px; }
+  .footer-links a { color:var(--muted); text-decoration:none; font-size:13px; transition:color 0.2s; }
+  .footer-links a:hover { color:var(--text); }
+  .footer-copy { color:var(--muted); font-size:13px; }
+
+  /* ── SCROLL ANIMATIONS ── */
+  .fade-in { opacity:0; transform:translateY(24px); transition:opacity 0.6s ease, transform 0.6s ease; }
+  .fade-in.visible { opacity:1; transform:translateY(0); }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 768px) {
+    nav { padding:16px 24px; }
+    .hero { padding:120px 24px 60px; }
+    .how, .demo-section, .pricing { padding:80px 24px; }
+    .dash-header, .dash-content { padding:24px; }
+    .damage-grid { grid-template-columns:1fr; }
+    .hero-stats { gap:32px; }
+    .nav-links { display:none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="logo">Car<span>Xray</span>.ai</div>
+  <div class="nav-links">
+    <a href="#how">How it works</a>
+    <a href="#pricing">Pricing</a>
+    <div class="lang-switch" id="langSwitch">
+      <button class="lang-btn active" onclick="setLang('en')">EN</button>
+      <button class="lang-btn" onclick="setLang('ka')">GE</button>
+      <button class="lang-btn" onclick="setLang('ru')">RU</button>
+    </div>
+  </div>
+  <a href="#" class="nav-cta" onclick="showModal();return false;" data-en="Get Started" data-ka="დაწყება" data-ru="Начать">Get Started</a>
+</nav>
+
+<!-- LANDING PAGE -->
+<div id="landingPage">
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-grid"></div>
+    <div class="hero-glow"></div>
+    <div class="hero-tag" data-en="● AI-Powered Car Damage Analysis" data-ka="● AI-ზე დაფუძნებული ანალიზი" data-ru="● ИИ-анализ повреждений авто">● AI-Powered Car Damage Analysis</div>
+    <h1 data-en="Know before<br>you <em>bid.</em>" data-ka="გაიგე სანამ<br><em>ბიდს</em> დადებ." data-ru="Знай до<br>того как <em>бить.</em>">Know before<br>you <em>bid.</em></h1>
+    <p class="hero-sub" data-en="Paste a Copart or IAAI listing URL. Get a full AI damage report, repair cost estimate, and max bid recommendation in seconds." data-ka="ჩასვი Copart ან IAAI ლინკი. მიიღე სრული ანალიზი — დაზიანებები, სარემონტო ხარჯები, მაქსიმალური ბიდი." data-ru="Вставьте ссылку с Copart или IAAI. Получите полный AI-отчёт о повреждениях, стоимости ремонта и максимальной ставке.">Paste a Copart or IAAI listing URL. Get a full AI damage report, repair cost estimate, and max bid recommendation in seconds.</p>
+    <div class="hero-actions">
+      <button class="btn-primary" onclick="showModal()" data-en="Analyze a car →" data-ka="მანქანის ანალიზი →" data-ru="Анализировать авто →">Analyze a car →</button>
+      <button class="btn-ghost" onclick="showDashboard()" data-en="See demo report" data-ka="დემო რეპორტის ნახვა" data-ru="Посмотреть демо">See demo report</button>
+    </div>
+    <div class="hero-stats fade-in">
+      <div class="stat-item">
+        <div class="stat-num">12<span>K+</span></div>
+        <div class="stat-label" data-en="Cars analyzed" data-ka="გაანალიზებული მანქანა" data-ru="Проанализировано авто">Cars analyzed</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num">$2<span>M+</span></div>
+        <div class="stat-label" data-en="Saved by buyers" data-ka="დაზოგილი თანხა" data-ru="Сэкономлено покупателями">Saved by buyers</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num">94<span>%</span></div>
+        <div class="stat-label" data-en="Accuracy rate" data-ka="სიზუსტის მაჩვენებელი" data-ru="Точность оценки">Accuracy rate</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num">&lt;30<span>s</span></div>
+        <div class="stat-label" data-en="Per full report" data-ka="სრული ანალიზი" data-ru="На полный отчёт">Per full report</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section class="how" id="how">
+    <div class="section-label" data-en="How it works" data-ka="როგორ მუშაობს" data-ru="Как это работает">How it works</div>
+    <h2 data-en="4 steps to smarter bidding" data-ka="4 ნაბიჯი ჭკვიანი ბიდისთვის" data-ru="4 шага к умной покупке">4 steps to smarter bidding</h2>
+    <div class="steps fade-in">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-icon">🔗</div>
+        <h3 data-en="Paste URL" data-ka="ჩასვი ლინკი" data-ru="Вставь ссылку">Paste URL</h3>
+        <p data-en="Copart or IAAI listing link. We fetch all photos automatically — no manual uploads needed." data-ka="Copart ან IAAI-ს ლინკი. ფოტოებს ავტომატურად ვიტანთ." data-ru="Ссылка с Copart или IAAI. Фото загружаются автоматически.">Copart or IAAI listing link. We fetch all photos automatically — no manual uploads needed.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-icon">🤖</div>
+        <h3 data-en="AI scans photos" data-ka="AI ანალიზი" data-ru="ИИ сканирует фото">AI scans photos</h3>
+        <p data-en="Our AI examines every photo — exterior, interior, engine bay, dashboard — and identifies all visible damage." data-ka="AI ყველა ფოტოს ამოწმებს — გარე, სალონი, ძრავა, კლასტერი." data-ru="ИИ изучает каждое фото — экстерьер, салон, двигатель, приборы.">Our AI examines every photo — exterior, interior, engine bay, dashboard — and identifies all visible damage.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-icon">📊</div>
+        <h3 data-en="Cost estimate" data-ka="ხარჯების გაანგარიშება" data-ru="Расчёт стоимости">Cost estimate</h3>
+        <p data-en="Parts + labor costs broken down per damage item, with US market pricing for your region." data-ka="ნაწილები + სამუშაო — ცალ-ცალკე, ბაზრის ფასებით." data-ru="Запчасти и работа по каждому повреждению, по рыночным ценам.">Parts + labor costs broken down per damage item, with US market pricing for your region.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-icon">🎯</div>
+        <h3 data-en="Bid recommendation" data-ka="ბიდის რეკომენდაცია" data-ru="Рекомендация по ставке">Bid recommendation</h3>
+        <p data-en="Get a maximum safe bid amount based on repair costs, current market value, and profit margin." data-ka="მაქსიმალური ბიდი — გათვლილი სარემონტო + საბაზრო ღირებულებით." data-ru="Максимальная ставка с учётом ремонта, рыночной стоимости и маржи.">Get a maximum safe bid amount based on repair costs, current market value, and profit margin.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- DEMO -->
+  <section class="demo-section" id="demo">
+    <div class="demo-container">
+      <div class="section-label" data-en="Live Demo" data-ka="დემო" data-ru="Демо">Live Demo</div>
+      <h2 data-en="Try it now" data-ka="სცადე ახლავე" data-ru="Попробуй сейчас">Try it now</h2>
+      <div class="demo-input-box fade-in">
+        <div class="demo-label" data-en="Paste auction listing URL" data-ka="ჩასვი აუქციონის ლინკი" data-ru="Вставьте ссылку на лот">Paste auction listing URL</div>
+        <div class="url-input-row">
+          <input class="url-input" id="demoUrl" placeholder="https://www.copart.com/lot/..." type="text">
+          <button class="btn-primary" onclick="startAnalysis()" data-en="Analyze →" data-ka="ანალიზი →" data-ru="Анализ →">Analyze →</button>
+        </div>
+        <div class="source-badges">
+          <span class="badge badge-copart">✓ Copart</span>
+          <span class="badge badge-iaai">✓ IAAI</span>
+        </div>
+      </div>
+
+      <!-- DEMO REPORT -->
+      <div class="report-card fade-in" id="demoReport">
+        <div class="report-header">
+          <div>
+            <div class="report-title">2026 Chevrolet Equinox LT</div>
+            <div class="report-meta">Copart #78879865 · Cleveland West, OH · 9,134 mi · AWD</div>
+          </div>
+          <div class="score-badge score-high">7.2</div>
+        </div>
+        <div class="report-body">
+          <div class="damage-grid">
+            <div class="damage-item damage-critical">
+              <div class="damage-item-label" data-en="Airbag" data-ka="საჰაერო ბალიში" data-ru="Подушка безопасности">Airbag</div>
+              <div class="damage-item-val" data-en="Driver deployed ⚠" data-ka="მძღოლის გამოვიდა ⚠" data-ru="Водительская сработала ⚠">Driver deployed ⚠</div>
+            </div>
+            <div class="damage-item damage-critical">
+              <div class="damage-item-label" data-en="Front Right" data-ka="წინა მარჯვენა" data-ru="Перед правый">Front Right</div>
+              <div class="damage-item-val" data-en="Severe collision" data-ka="სერიოზული დარტყმა" data-ru="Сильный удар">Severe collision</div>
+            </div>
+            <div class="damage-item damage-warning">
+              <div class="damage-item-label" data-en="Hood" data-ka="კაპოტი" data-ru="Капот">Hood</div>
+              <div class="damage-item-val" data-en="Crushed, won't latch" data-ka="ჩაჭყლეტილი" data-ru="Сломан, не закрывается">Crushed, won't latch</div>
+            </div>
+            <div class="damage-item damage-warning">
+              <div class="damage-item-label" data-en="Headlight R" data-ka="ფარი მარჯვნივ" data-ru="Фара правая">Headlight R</div>
+              <div class="damage-item-val" data-en="Assembly destroyed" data-ka="განადგურებული" data-ru="Разрушена">Assembly destroyed</div>
+            </div>
+            <div class="damage-item damage-ok">
+              <div class="damage-item-label" data-en="Rear" data-ka="უკანა ნაწილი" data-ru="Корма">Rear</div>
+              <div class="damage-item-val" data-en="No damage ✓" data-ka="დაუზიანებელია ✓" data-ru="Повреждений нет ✓">No damage ✓</div>
+            </div>
+            <div class="damage-item damage-ok">
+              <div class="damage-item-label" data-en="Engine" data-ka="ძრავა" data-ru="Двигатель">Engine</div>
+              <div class="damage-item-val" data-en="Runs, no leaks ✓" data-ka="მუშაობს ✓" data-ru="Работает, утечек нет ✓">Runs, no leaks ✓</div>
+            </div>
+          </div>
+
+          <!-- OEM / USED TOGGLE -->
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
+            <span style="font-size:13px;color:#888;">ნაწილების ტიპი:</span>
+            <div style="display:flex;background:#111;border:1px solid rgba(245,243,238,0.08);border-radius:10px;padding:3px;gap:3px;">
+              <button id="btnOEM" onclick="setPartsMode('oem')" style="padding:7px 16px;border-radius:7px;border:none;cursor:pointer;font-size:13px;font-weight:500;font-family:'DM Sans',sans-serif;background:var(--accent);color:#0a0a0a;transition:all 0.2s;">OEM ახალი</button>
+              <button id="btnUsed" onclick="setPartsMode('used')" style="padding:7px 16px;border-radius:7px;border:none;cursor:pointer;font-size:13px;font-weight:500;font-family:'DM Sans',sans-serif;background:transparent;color:#888;transition:all 0.2s;">მეორადი</button>
+            </div>
+          </div>
+
+          <!-- SAVINGS BANNER -->
+          <div id="savingsBanner" style="display:none;background:rgba(68,255,136,0.07);border:1px solid rgba(68,255,136,0.2);border-radius:10px;padding:10px 16px;margin-bottom:12px;font-size:13px;color:#44ff88;align-items:center;justify-content:space-between;">
+            <span>✓ მეორადი ნაწილები — დაზოგვა OEM-სთან:</span>
+            <strong>~$3,100</strong>
+          </div>
+
+          <div class="cost-row">
+            <span class="cost-label">Airbag სისტემა (მძღოლი + სენსორები)</span>
+            <div style="text-align:right;">
+              <span class="cost-value" id="p1">$2,500–$3,500</span>
+              <div id="p1u" style="display:none;font-size:11px;color:#44ff88;margin-top:2px;">მეორადი: $500–$900</div>
+            </div>
+          </div>
+          <div class="cost-row">
+            <span class="cost-label">კაპოტი + ფრთა + ბამპერი</span>
+            <div style="text-align:right;">
+              <span class="cost-value" id="p2">$1,500–$2,500</span>
+              <div id="p2u" style="display:none;font-size:11px;color:#44ff88;margin-top:2px;">მეორადი: $350–$700</div>
+            </div>
+          </div>
+          <div class="cost-row">
+            <span class="cost-label">მარჯვენა ფარი</span>
+            <div style="text-align:right;">
+              <span class="cost-value" id="p3">$800–$1,500</span>
+              <div id="p3u" style="display:none;font-size:11px;color:#44ff88;margin-top:2px;">მეორადი: $180–$400</div>
+            </div>
+          </div>
+          <div class="cost-row">
+            <span class="cost-label">საკიდი + alignment (labor)</span>
+            <div style="text-align:right;">
+              <span class="cost-value" id="p4">$500–$1,000</span>
+              <div id="p4u" style="display:none;font-size:11px;color:#888;margin-top:2px;">labor — არ იცვლება</div>
+            </div>
+          </div>
+          <div class="cost-total">
+            <span class="cost-label" style="color:var(--text);font-weight:500;">სარემონტო ხარჯი სულ</span>
+            <span class="cost-value" id="totalCost">$5,300–$8,500</span>
+          </div>
+          <div class="bid-rec">
+            <div class="bid-rec-label">მაქსიმალური ბიდი</div>
+            <div class="bid-rec-text" id="bidText">საბაზრო ღირებულება ~$28,000. შეკეთება + $2,000 ტრანსპ. + fees:</div>
+            <div class="bid-rec-amount" id="bidAmount">$17,500</div>
+          </div>
+
+          <!-- PARTS SOURCES — shown only in Used mode -->
+          <div id="partsSources" style="display:none; margin-top:16px; background:#111; border:1px solid rgba(245,243,238,0.08); border-radius:12px; padding:16px 18px;">
+            <div style="font-size:12px; font-weight:500; text-transform:uppercase; letter-spacing:0.08em; color:#888; margin-bottom:12px;">🔍 სად ვიყიდო მეორადი ნაწილები</div>
+            <div style="display:flex; flex-direction:column; gap:8px;">
+
+              <a href="https://myparts.ge" target="_blank" style="display:flex; align-items:center; justify-content:space-between; background:#1a1a1a; border:1px solid rgba(245,243,238,0.06); border-radius:9px; padding:11px 14px; text-decoration:none; transition:border-color 0.2s;" onmouseover="this.style.borderColor='rgba(232,255,71,0.3)'" onmouseout="this.style.borderColor='rgba(245,243,238,0.06)'">
+                <div style="display:flex; align-items:center; gap:10px;">
+                  <div style="width:32px; height:32px; background:rgba(232,255,71,0.1); border-radius:7px; display:flex; align-items:center; justify-content:center; font-size:15px;">🇬🇪</div>
+                  <div>
+                    <div style="font-size:14px; font-weight:500; color:#f5f3ee;">myparts.ge</div>
+                    <div style="font-size:12px; color:#888;">საქართველოს მეორადი ავტო ნაწილები</div>
+                  </div>
+                </div>
+                <span style="font-size:12px; color:var(--accent);">გახსნა ↗</span>
+              </a>
+
+              <a href="https://www.ebay.com/motors" target="_blank" style="display:flex; align-items:center; justify-content:space-between; background:#1a1a1a; border:1px solid rgba(245,243,238,0.06); border-radius:9px; padding:11px 14px; text-decoration:none; transition:border-color 0.2s;" onmouseover="this.style.borderColor='rgba(232,255,71,0.3)'" onmouseout="this.style.borderColor='rgba(245,243,238,0.06)'">
+                <div style="display:flex; align-items:center; gap:10px;">
+                  <div style="width:32px; height:32px; background:rgba(232,255,71,0.1); border-radius:7px; display:flex; align-items:center; justify-content:center; font-size:15px;">🇺🇸</div>
+                  <div>
+                    <div style="font-size:14px; font-weight:500; color:#f5f3ee;">eBay Motors</div>
+                    <div style="font-size:12px; color:#888;">OEM + aftermarket, USA-დან გემით</div>
+                  </div>
+                </div>
+                <span style="font-size:12px; color:var(--accent);">გახსნა ↗</span>
+              </a>
+
+              <a href="https://www.car-part.com" target="_blank" style="display:flex; align-items:center; justify-content:space-between; background:#1a1a1a; border:1px solid rgba(245,243,238,0.06); border-radius:9px; padding:11px 14px; text-decoration:none; transition:border-color 0.2s;" onmouseover="this.style.borderColor='rgba(232,255,71,0.3)'" onmouseout="this.style.borderColor='rgba(245,243,238,0.06)'">
+                <div style="display:flex; align-items:center; gap:10px;">
+                  <div style="width:32px; height:32px; background:rgba(232,255,71,0.1); border-radius:7px; display:flex; align-items:center; justify-content:center; font-size:15px;">🔧</div>
+                  <div>
+                    <div style="font-size:14px; font-weight:500; color:#f5f3ee;">Car-Part.com</div>
+                    <div style="font-size:12px; color:#888;">USA-ს salvage yards — OEM used</div>
+                  </div>
+                </div>
+                <span style="font-size:12px; color:var(--accent);">გახსნა ↗</span>
+              </a>
+
+              <a href="https://www.lkqonline.com" target="_blank" style="display:flex; align-items:center; justify-content:space-between; background:#1a1a1a; border:1px solid rgba(245,243,238,0.06); border-radius:9px; padding:11px 14px; text-decoration:none; transition:border-color 0.2s;" onmouseover="this.style.borderColor='rgba(232,255,71,0.3)'" onmouseout="this.style.borderColor='rgba(245,243,238,0.06)'">
+                <div style="display:flex; align-items:center; gap:10px;">
+                  <div style="width:32px; height:32px; background:rgba(232,255,71,0.1); border-radius:7px; display:flex; align-items:center; justify-content:center; font-size:15px;">🏭</div>
+                  <div>
+                    <div style="font-size:14px; font-weight:500; color:#f5f3ee;">LKQ Online</div>
+                    <div style="font-size:12px; color:#888;">ყველაზე დიდი salvage parts network</div>
+                  </div>
+                </div>
+                <span style="font-size:12px; color:var(--accent);">გახსნა ↗</span>
+              </a>
+
+              <a href="https://www.avito.ru/rossiya/zapchasti_i_aksessuary" target="_blank" style="display:flex; align-items:center; justify-content:space-between; background:#1a1a1a; border:1px solid rgba(245,243,238,0.06); border-radius:9px; padding:11px 14px; text-decoration:none; transition:border-color 0.2s;" onmouseover="this.style.borderColor='rgba(232,255,71,0.3)'" onmouseout="this.style.borderColor='rgba(245,243,238,0.06)'">
+                <div style="display:flex; align-items:center; gap:10px;">
+                  <div style="width:32px; height:32px; background:rgba(232,255,71,0.1); border-radius:7px; display:flex; align-items:center; justify-content:center; font-size:15px;">🇷🇺</div>
+                  <div>
+                    <div style="font-size:14px; font-weight:500; color:#f5f3ee;">Avito.ru</div>
+                    <div style="font-size:12px; color:#888;">ახალი და მეორადი ავტო ნაწილები</div>
+                  </div>
+                </div>
+                <span style="font-size:12px; color:var(--accent);">გახსნა ↗</span>
+              </a>
+
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PRICING -->
+  <section class="pricing" id="pricing">
+    <div class="section-label" data-en="Pricing" data-ka="ფასები" data-ru="Цены">Pricing</div>
+    <h2 data-en="Pay per report or subscribe" data-ka="გადაიხადე ერთჯერ ან გამოიწერე" data-ru="Платите за отчёт или подпишитесь">Pay per report or subscribe</h2>
+    <div class="pricing-grid fade-in">
+      <div class="plan">
+        <div class="plan-name" data-en="Single Report" data-ka="ერთი ანალიზი" data-ru="Один отчёт">Single Report</div>
+        <div class="plan-price"><sup>$</sup>9</div>
+        <div class="plan-desc" data-en="Per analysis · No subscription" data-ka="ერთი ანალიზი · სუბსქ. გარეშე" data-ru="За один отчёт · Без подписки">Per analysis · No subscription</div>
+        <ul class="plan-features">
+          <li data-en="1 full damage report" data-ka="1 სრული ანალიზი" data-ru="1 полный отчёт">1 full damage report</li>
+          <li data-en="Repair cost breakdown" data-ka="ხარჯების ანალიზი" data-ru="Разбивка расходов">Repair cost breakdown</li>
+          <li data-en="Bid recommendation" data-ka="ბიდის რეკომენდაცია" data-ru="Рекомендация по ставке">Bid recommendation</li>
+          <li data-en="Copart + IAAI support" data-ka="Copart + IAAI" data-ru="Copart + IAAI">Copart + IAAI support</li>
+          <li class="na" data-en="History & saved reports" data-ka="ისტორია" data-ru="История отчётов">History & saved reports</li>
+          <li class="na" data-en="Priority processing" data-ka="პრიორიტეტული" data-ru="Приоритетная обработка">Priority processing</li>
+        </ul>
+        <button class="plan-btn plan-btn-ghost" onclick="showModal()" data-en="Buy report" data-ka="ანალიზის ყიდვა" data-ru="Купить отчёт">Buy report</button>
+      </div>
+      <div class="plan featured">
+        <div class="plan-tag" data-en="Most Popular" data-ka="პოპულარული" data-ru="Популярный">Most Popular</div>
+        <div class="plan-name" data-en="Pro Monthly" data-ka="Pro — თვიური" data-ru="Pro Monthly">Pro Monthly</div>
+        <div class="plan-price"><sup>$</sup>49</div>
+        <div class="plan-desc" data-en="Per month · 20 reports included" data-ka="თვეში · 20 ანალიზი შედის" data-ru="В месяц · 20 отчётов включено">Per month · 20 reports included</div>
+        <ul class="plan-features">
+          <li data-en="20 reports / month" data-ka="20 ანალიზი / თვეში" data-ru="20 отчётов / месяц">20 reports / month</li>
+          <li data-en="Repair cost breakdown" data-ka="ხარჯების ანალიზი" data-ru="Разбивка расходов">Repair cost breakdown</li>
+          <li data-en="Bid recommendation" data-ka="ბიდის რეკომენდაცია" data-ru="Рекомендация по ставке">Bid recommendation</li>
+          <li data-en="Copart + IAAI support" data-ka="Copart + IAAI" data-ru="Copart + IAAI">Copart + IAAI support</li>
+          <li data-en="History & saved reports" data-ka="ისტორია და შენახული" data-ru="История и сохранённые">History & saved reports</li>
+          <li data-en="Priority processing" data-ka="პრიორიტეტული დამუშავება" data-ru="Приоритетная обработка">Priority processing</li>
+        </ul>
+        <button class="plan-btn plan-btn-accent" onclick="showModal()" data-en="Start free trial" data-ka="უფასო სატესტო" data-ru="Начать пробный период">Start free trial</button>
+      </div>
+      <div class="plan">
+        <div class="plan-name" data-en="Dealer / Business" data-ka="დილერი / ბიზნესი" data-ru="Дилер / Бизнес">Dealer / Business</div>
+        <div class="plan-price"><sup>$</sup>149</div>
+        <div class="plan-desc" data-en="Per month · Unlimited reports" data-ka="თვეში · შეუზღუდავი ანალიზი" data-ru="В месяц · Безлимитные отчёты">Per month · Unlimited reports</div>
+        <ul class="plan-features">
+          <li data-en="Unlimited reports" data-ka="შეუზღუდავი ანალიზი" data-ru="Безлимитные отчёты">Unlimited reports</li>
+          <li data-en="Repair cost breakdown" data-ka="ხარჯების ანალიზი" data-ru="Разбивка расходов">Repair cost breakdown</li>
+          <li data-en="Bid recommendation" data-ka="ბიდის რეკომენდაცია" data-ru="Рекомендация по ставке">Bid recommendation</li>
+          <li data-en="Copart + IAAI support" data-ka="Copart + IAAI" data-ru="Copart + IAAI">Copart + IAAI support</li>
+          <li data-en="Team accounts (5 users)" data-ka="გუნდის ანგარიშები (5)" data-ru="Командные аккаунты (5)">Team accounts (5 users)</li>
+          <li data-en="API access" data-ka="API წვდომა" data-ru="API доступ">API access</li>
+        </ul>
+        <button class="plan-btn plan-btn-ghost" onclick="showModal()" data-en="Contact us" data-ka="დაგვიკავშირდი" data-ru="Связаться">Contact us</button>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="logo">Car<span>Xray</span>.ai</div>
+    <div class="footer-links">
+      <a href="#" data-en="Privacy" data-ka="კონფიდენციალობა" data-ru="Конфиденциальность">Privacy</a>
+      <a href="#" data-en="Terms" data-ka="პირობები" data-ru="Условия">Terms</a>
+      <a href="#" data-en="Contact" data-ka="კონტაქტი" data-ru="Контакт">Contact</a>
+    </div>
+    <div class="footer-copy">© 2026 CarXray.ai.ai</div>
+  </footer>
+</div>
+
+<!-- DASHBOARD -->
+<div class="dashboard" id="dashboardPage">
+  <div class="dash-header">
+    <div>
+      <div class="dash-title" data-en="My Reports" data-ka="ჩემი ანალიზები" data-ru="Мои отчёты">My Reports</div>
+      <div class="dash-subtitle" data-en="Your car damage analysis history" data-ka="მანქანების ანალიზის ისტორია" data-ru="История анализа автомобилей">Your car damage analysis history</div>
+    </div>
+    <div style="display:flex;gap:12px;align-items:center;">
+      <div class="lang-switch">
+        <button class="lang-btn active" onclick="setLang('en')">EN</button>
+        <button class="lang-btn" onclick="setLang('ka')">GE</button>
+        <button class="lang-btn" onclick="setLang('ru')">RU</button>
+      </div>
+      <div class="credits-badge">
+        12 <span data-en="reports left" data-ka="ანალიზი დარჩა" data-ru="отчётов осталось">reports left</span>
+      </div>
+      <button class="btn-ghost" onclick="showLanding()" style="color:var(--muted);font-size:13px;">← <span data-en="Back" data-ka="უკან" data-ru="Назад">Back</span></button>
+    </div>
+  </div>
+  <div class="dash-content">
+    <div class="new-analysis-box">
+      <h3 data-en="New Analysis" data-ka="ახალი ანალიზი" data-ru="Новый анализ">New Analysis</h3>
+      <p data-en="Paste a Copart or IAAI listing URL to get started" data-ka="ჩასვი Copart ან IAAI ლინკი" data-ru="Вставьте ссылку с Copart или IAAI">Paste a Copart or IAAI listing URL to get started</p>
+      <div class="url-input-row">
+        <input class="url-input" placeholder="https://www.copart.com/lot/..." type="text">
+        <button class="btn-primary" onclick="startAnalysis()" data-en="Analyze →" data-ka="ანალიზი →" data-ru="Анализ →">Analyze →</button>
+      </div>
+    </div>
+
+    <div class="section-label" data-en="Recent Reports" data-ka="ბოლო ანალიზები" data-ru="Последние отчёты">Recent Reports</div>
+    <div class="reports-grid" style="margin-top:20px;">
+      <div class="report-thumb">
+        <div class="rt-header">
+          <div>
+            <div class="rt-car">2026 Chevrolet Equinox LT</div>
+            <div class="rt-date">Mar 30, 2026 · Copart OH</div>
+          </div>
+          <span class="rt-status status-high" data-en="Heavy" data-ka="მძიმე" data-ru="Тяжёлые">Heavy</span>
+        </div>
+        <div class="rt-damage" data-en="Airbag deployed · Front right collision · Hood crushed" data-ka="Airbag გამოვიდა · წინა მარჯვნივ დარტყმა · კაპოტი" data-ru="Подушка сработала · Удар справа спереди · Капот">Airbag deployed · Front right collision · Hood crushed</div>
+        <div class="rt-footer">
+          <div class="rt-cost">$5,300–$8,500</div>
+          <div style="font-size:12px;color:var(--muted);" data-en="Max bid: $17,500" data-ka="მაქს. ბიდი: $17,500" data-ru="Макс. ставка: $17,500">Max bid: $17,500</div>
+        </div>
+        <div class="progress-bar"><div class="progress-fill" style="width:72%;background:var(--red);"></div></div>
+      </div>
+      <div class="report-thumb">
+        <div class="rt-header">
+          <div>
+            <div class="rt-car">2024 Toyota Camry SE</div>
+            <div class="rt-date">Mar 28, 2026 · IAAI TX</div>
+          </div>
+          <span class="rt-status status-med" data-en="Medium" data-ka="საშუალო" data-ru="Средние">Medium</span>
+        </div>
+        <div class="rt-damage" data-en="Rear bumper · Trunk lid · Taillights" data-ka="უკანა ბამპერი · სახურავი · ფარები" data-ru="Задний бампер · Крышка багажника · Фонари">Rear bumper · Trunk lid · Taillights</div>
+        <div class="rt-footer">
+          <div class="rt-cost">$2,100–$3,200</div>
+          <div style="font-size:12px;color:var(--muted);" data-en="Max bid: $14,200" data-ka="მაქს. ბიდი: $14,200" data-ru="Макс. ставка: $14,200">Max bid: $14,200</div>
+        </div>
+        <div class="progress-bar"><div class="progress-fill" style="width:44%;background:var(--yellow);"></div></div>
+      </div>
+      <div class="report-thumb">
+        <div class="rt-header">
+          <div>
+            <div class="rt-car">2023 BMW 3 Series 330i</div>
+            <div class="rt-date">Mar 25, 2026 · Copart FL</div>
+          </div>
+          <span class="rt-status status-low" data-en="Minor" data-ka="მსუბუქი" data-ru="Лёгкие">Minor</span>
+        </div>
+        <div class="rt-damage" data-en="Front bumper scratch · Hood dent · Minor hail" data-ka="ბამპერის გაფხეკა · კაპოტი · სეტყვა" data-ru="Царапина бампера · Вмятина капота · Лёгкий град">Front bumper scratch · Hood dent · Minor hail</div>
+        <div class="rt-footer">
+          <div class="rt-cost">$800–$1,400</div>
+          <div style="font-size:12px;color:var(--muted);" data-en="Max bid: $22,800" data-ka="მაქს. ბიდი: $22,800" data-ru="Макс. ставка: $22,800">Max bid: $22,800</div>
+        </div>
+        <div class="progress-bar"><div class="progress-fill" style="width:18%;background:var(--green);"></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- AUTH MODAL -->
+<div class="modal-overlay" id="authModal">
+  <div class="modal">
+    <button class="modal-close" onclick="hideModal()">✕</button>
+    <div class="modal-logo">Car<span>Xray</span>.ai</div>
+    <div class="modal-subtitle" data-en="Analyze salvage cars before you bid" data-ka="გაანალიზე მანქანა ბიდამდე" data-ru="Анализируй авто до ставки">Analyze salvage cars before you bid</div>
+    <div class="modal-tabs">
+      <button class="modal-tab active" onclick="switchTab('login')" data-en="Sign in" data-ka="შესვლა" data-ru="Войти">Sign in</button>
+      <button class="modal-tab" onclick="switchTab('register')" data-en="Create account" data-ka="რეგისტრაცია" data-ru="Регистрация">Create account</button>
+    </div>
+    <div id="loginForm">
+      <div class="form-group">
+        <label class="form-label" data-en="EMAIL" data-ka="ელ-ფოსტა" data-ru="EMAIL">EMAIL</label>
+        <input class="form-input" type="email" placeholder="you@example.com">
+      </div>
+      <div class="form-group">
+        <label class="form-label" data-en="PASSWORD" data-ka="პაროლი" data-ru="ПАРОЛЬ">PASSWORD</label>
+        <input class="form-input" type="password" placeholder="••••••••">
+      </div>
+      <button class="btn-primary" style="width:100%;justify-content:center;margin-top:8px;" onclick="loginDemo()" data-en="Sign in →" data-ka="შესვლა →" data-ru="Войти →">Sign in →</button>
+      <div class="form-divider" data-en="or" data-ka="ან" data-ru="или">or</div>
+      <button class="oauth-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+        <span data-en="Continue with Google" data-ka="Google-ით შესვლა" data-ru="Войти через Google">Continue with Google</span>
+      </button>
+    </div>
+    <div id="registerForm" style="display:none;">
+      <div class="form-group">
+        <label class="form-label" data-en="FULL NAME" data-ka="სახელი" data-ru="ИМЯ">FULL NAME</label>
+        <input class="form-input" type="text" placeholder="John Doe">
+      </div>
+      <div class="form-group">
+        <label class="form-label" data-en="EMAIL" data-ka="ელ-ფოსტა" data-ru="EMAIL">EMAIL</label>
+        <input class="form-input" type="email" placeholder="you@example.com">
+      </div>
+      <div class="form-group">
+        <label class="form-label" data-en="PASSWORD" data-ka="პაროლი" data-ru="ПАРОЛЬ">PASSWORD</label>
+        <input class="form-input" type="password" placeholder="Min. 8 characters">
+      </div>
+      <button class="btn-primary" style="width:100%;justify-content:center;margin-top:8px;" onclick="loginDemo()" data-en="Create account →" data-ka="ანგარიშის შექმნა →" data-ru="Создать аккаунт →">Create account →</button>
+      <div class="form-divider" data-en="or" data-ka="ან" data-ru="или">or</div>
+      <button class="oauth-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+        <span data-en="Continue with Google" data-ka="Google-ით შესვლა" data-ru="Войти через Google">Continue with Google</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ANALYZING OVERLAY -->
+<div class="analyzing-overlay" id="analyzingOverlay">
+  <div class="spinner"></div>
+  <div class="analyzing-text" data-en="Analyzing vehicle..." data-ka="მანქანის ანალიზი..." data-ru="Анализируем авто...">Analyzing vehicle...</div>
+  <div class="analyzing-steps">
+    <div class="analyzing-step done" data-en="✓ Fetching listing photos" data-ka="ფოტოების ჩამოტვირთვა" data-ru="Загрузка фото лота">Fetching listing photos</div>
+    <div class="analyzing-step active" data-en="› Scanning for damage" data-ka="დაზიანებების სკანირება" data-ru="Сканирование повреждений">Scanning for damage</div>
+    <div class="analyzing-step" data-en="Estimating repair costs" data-ka="ხარჯების გაანგარიშება" data-ru="Расчёт стоимости ремонта">Estimating repair costs</div>
+    <div class="analyzing-step" data-en="Calculating max bid" data-ka="ბიდის გაანგარიშება" data-ru="Расчёт максимальной ставки">Calculating max bid</div>
+  </div>
+</div>
+
+<script>
+let currentLang = 'en';
+
+function setLang(lang) {
+  currentLang = lang;
+  document.querySelectorAll('.lang-btn').forEach(b => {
+    b.classList.toggle('active', b.textContent.toLowerCase() === lang || (lang==='ka'&&b.textContent==='GE'));
+  });
+  document.querySelectorAll('[data-'+lang+']').forEach(el => {
+    if (el.tagName === 'INPUT') {
+      el.placeholder = el.dataset[lang];
+    } else {
+      el.innerHTML = el.dataset[lang];
+    }
+  });
+}
+
+function showModal() {
+  document.getElementById('authModal').classList.add('active');
+}
+function hideModal() {
+  document.getElementById('authModal').classList.remove('active');
+}
+function switchTab(tab) {
+  document.querySelectorAll('.modal-tab').forEach((t,i) => t.classList.toggle('active', (i===0&&tab==='login')||(i===1&&tab==='register')));
+  document.getElementById('loginForm').style.display = tab==='login'?'block':'none';
+  document.getElementById('registerForm').style.display = tab==='register'?'block':'none';
+}
+function loginDemo() {
+  hideModal();
+  showDashboard();
+}
+function showDashboard() {
+  document.getElementById('landingPage').style.display = 'none';
+  document.getElementById('dashboardPage').classList.add('active');
+  window.scrollTo(0,0);
+}
+function showLanding() {
+  document.getElementById('landingPage').style.display = 'block';
+  document.getElementById('dashboardPage').classList.remove('active');
+  window.scrollTo(0,0);
+}
+
+async function startAnalysis() {
+  if (!authToken) { showModal(); return; }
+  const urlInputs = document.querySelectorAll('.url-input');
+  const url = urlInputs[urlInputs.length - 1].value.trim();
+  if (!url) { alert('ჩასვი Copart ან IAAI ლინკი'); return; }
+  if (!url.includes('copart.com') && !url.includes('iaai.com')) {
+    alert('მხოლოდ Copart ან IAAI ლინკი'); return;
+  }
+  const overlay = document.getElementById('analyzingOverlay');
+  overlay.classList.add('active');
+  const steps = overlay.querySelectorAll('.analyzing-step');
+  steps.forEach(s => { s.className='analyzing-step'; });
+  steps[0].classList.add('done');
+  steps[1].classList.add('active');
+  try {
+    const data = await apiPost('/api/reports/analyze', { url }, true);
+    if (!data.reportId) { throw new Error(data.error || 'ანალიზი ვერ დაიწყო'); }
+    steps[1].classList.remove('active'); steps[1].classList.add('done');
+    steps[2].classList.add('active');
+    // Poll for result
+    let attempts = 0;
+    const poll = setInterval(async () => {
+      attempts++;
+      const report = await apiGet(`/api/reports/${data.reportId}`);
+      if (report.status === 'done') {
+        clearInterval(poll);
+        steps[2].classList.remove('active'); steps[2].classList.add('done');
+        steps[3].classList.add('done');
+        setTimeout(() => { overlay.classList.remove('active'); showDashboard(); }, 800);
+      } else if (report.status === 'failed' || attempts > 40) {
+        clearInterval(poll);
+        overlay.classList.remove('active');
+        alert('ანალიზი ვერ დასრულდა. სცადე თავიდან.');
+      }
+    }, 3000);
+  } catch(err) {
+    overlay.classList.remove('active');
+    alert(err.message);
+  }
+}
+
+// ── API CONFIG ──
+const API = 'https://carxray-backend-te4uf.ondigitalocean.app';
+let authToken = localStorage.getItem('carxray_token') || null;
+let currentUser = null;
+
+// ── API HELPERS ──
+async function apiPost(path, body, auth = false) {
+  const headers = { 'Content-Type': 'application/json' };
+  if (auth && authToken) headers['Authorization'] = `Bearer ${authToken}`;
+  const res = await fetch(API + path, { method: 'POST', headers, body: JSON.stringify(body) });
+  return res.json();
+}
+async function apiGet(path) {
+  const res = await fetch(API + path, { headers: { 'Authorization': `Bearer ${authToken}` } });
+  return res.json();
+}
+
+// ── AUTH ──
+async function loginDemo() {
+  const isLogin = document.getElementById('loginForm').style.display !== 'none';
+  if (isLogin) {
+    const email = document.querySelector('#loginForm input[type="email"]').value;
+    const password = document.querySelector('#loginForm input[type="password"]').value;
+    if (!email || !password) { alert('შეავსე ყველა ველი'); return; }
+    const btn = document.querySelector('#loginForm .btn-primary');
+    btn.textContent = 'Loading...';
+    const data = await apiPost('/api/auth/login', { email, password });
+    btn.textContent = 'Sign in →';
+    if (data.token) {
+      authToken = data.token;
+      currentUser = data.user;
+      localStorage.setItem('carxray_token', authToken);
+      hideModal();
+      showDashboard();
+    } else {
+      alert(data.error || 'შესვლა ვერ მოხერხდა');
+    }
+  } else {
+    const name = document.querySelector('#registerForm input[type="text"]').value;
+    const email = document.querySelector('#registerForm input[type="email"]').value;
+    const password = document.querySelector('#registerForm input[type="password"]').value;
+    if (!name || !email || !password) { alert('შეავსე ყველა ველი'); return; }
+    const btn = document.querySelector('#registerForm .btn-primary');
+    btn.textContent = 'Loading...';
+    const data = await apiPost('/api/auth/register', { name, email, password });
+    btn.textContent = 'Create account →';
+    if (data.token) {
+      authToken = data.token;
+      currentUser = data.user;
+      localStorage.setItem('carxray_token', authToken);
+      hideModal();
+      showDashboard();
+    } else {
+      alert(data.error || 'რეგისტრაცია ვერ მოხერხდა');
+    }
+  }
+}
+
+// ── CHECK AUTH ON LOAD ──
+window.addEventListener('load', async () => {
+  if (authToken) {
+    const data = await apiGet('/api/auth/me');
+    if (data.user) {
+      currentUser = data.user;
+      showDashboard();
+    } else {
+      localStorage.removeItem('carxray_token');
+      authToken = null;
+    }
+  }
+});
+
+// Close modal on overlay click
+document.getElementById('authModal').addEventListener('click', function(e) {
+  if (e.target === this) hideModal();
+});
+
+// Scroll animations
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.1 });
+document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+
+// OEM vs Used parts toggle
+const partsData = {
+  oem:  { p1:'$2,500–$3,500', p2:'$1,500–$2,500', p3:'$800–$1,500',  p4:'$500–$1,000', total:'$5,300–$8,500', bid:'$17,500', bidText:'საბაზრო ღირებულება ~$28,000. OEM შეკეთება + $2,000 ტრანსპ. + fees:' },
+  used: { p1:'$500–$900',     p2:'$350–$700',      p3:'$180–$400',    p4:'$500–$1,000', total:'$2,300–$4,800', bid:'$20,000', bidText:'საბაზრო ღირებულება ~$28,000. მეორადი შეკეთება + $2,000 ტრანსპ. + fees:' }
+};
+
+function setPartsMode(mode) {
+  const d = partsData[mode];
+  const isUsed = mode === 'used';
+
+  // update prices with animated transition
+  ['p1','p2','p3','p4'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.style.transition = 'opacity 0.2s';
+      el.style.opacity = '0';
+      setTimeout(() => {
+        el.textContent = d[id];
+        el.style.opacity = '1';
+      }, 200);
+    }
+    const uel = document.getElementById(id+'u');
+    if (uel) uel.style.display = isUsed ? 'block' : 'none';
+  });
+
+  const total = document.getElementById('totalCost');
+  const bid   = document.getElementById('bidAmount');
+  const btext = document.getElementById('bidText');
+  const banner = document.getElementById('savingsBanner');
+
+  if (total) { total.style.opacity='0'; setTimeout(()=>{ total.textContent=d.total; total.style.opacity='1'; total.style.color=isUsed?'#44ff88':''; total.style.transition='opacity 0.2s,color 0.3s'; },200); }
+  if (bid)   { bid.style.opacity='0';   setTimeout(()=>{ bid.textContent=d.bid;     bid.style.opacity='1'; },200); }
+  if (btext) btext.textContent = d.bidText;
+  if (banner) { banner.style.display = isUsed ? 'flex' : 'none'; }
+
+  const sources = document.getElementById('partsSources');
+  if (sources) { sources.style.display = isUsed ? 'block' : 'none'; }
+
+  // toggle buttons
+  const btnOEM  = document.getElementById('btnOEM');
+  const btnUsed = document.getElementById('btnUsed');
+  if (btnOEM)  { btnOEM.style.background  = isUsed ? 'transparent' : 'var(--accent)'; btnOEM.style.color  = isUsed ? '#888' : '#0a0a0a'; }
+  if (btnUsed) { btnUsed.style.background = isUsed ? 'var(--accent)' : 'transparent'; btnUsed.style.color = isUsed ? '#0a0a0a' : '#888'; }
+}
+</script>
+</body>
+</html>
