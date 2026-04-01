@@ -1050,7 +1050,7 @@ async function apiGet(path) {
 
 // ── AUTH ──
 async function loginDemo() {
-  const isLogin = document.getElementById('loginForm').style.display !== 'none';
+  const isLogin = document.getElementById('registerForm').style.display === 'none';
   if (isLogin) {
     const email = document.querySelector('#loginForm input[type="email"]').value;
     const password = document.querySelector('#loginForm input[type="password"]').value;
