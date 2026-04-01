@@ -979,11 +979,20 @@ function switchTab(tab) {
   document.getElementById('loginForm').style.display = tab==='login'?'block':'none';
   document.getElementById('registerForm').style.display = tab==='register'?'block':'none';
 }
-async function showDashboard() {
+function loginDemo() {
+  hideModal();
+  showDashboard();
+}
+function showDashboard() {
   document.getElementById('landingPage').style.display = 'none';
   document.getElementById('dashboardPage').classList.add('active');
   window.scrollTo(0,0);
-  await loadReports();
+  loadReports();
+}
+function showLanding() {
+  document.getElementById('landingPage').style.display = 'block';
+  document.getElementById('dashboardPage').classList.remove('active');
+  window.scrollTo(0,0);
 }
 
 async function loadReports() {
@@ -991,29 +1000,109 @@ async function loadReports() {
     const reports = await apiGet('/api/reports');
     const grid = document.querySelector('.reports-grid');
     if (!grid) return;
-    if (!reports.length) { grid.innerHTML = '<p style="color:var(--muted)">ანალიზი არ გაქვს ჯერ</p>'; return; }
+    if (!reports.length) {
+      grid.innerHTML = '<p style="color:var(--muted);padding:20px;">ანალიზი ჯერ არ გაქვს</p>';
+      return;
+    }
     grid.innerHTML = reports.map(r => `
-      <div class="report-thumb">
+      <div class="report-thumb" onclick="showReport('${r.id}')" style="cursor:pointer;">
         <div class="rt-header">
           <div>
-            <div class="rt-car">${r.car_year || ''} ${r.car_make || ''} ${r.car_model || ''}</div>
-            <div class="rt-date">${new Date(r.created_at).toLocaleDateString()} · ${r.source?.toUpperCase()}</div>
+            <div class="rt-car">${r.car_year||''} ${r.car_make||''} ${r.car_model||''}</div>
+            <div class="rt-date">${new Date(r.created_at).toLocaleDateString()} · ${(r.source||'').toUpperCase()}</div>
           </div>
-          <span class="rt-status status-${r.damage_score > 6 ? 'high' : r.damage_score > 3 ? 'med' : 'low'}">${r.status}</span>
+          <span class="rt-status status-${(r.damage_score||0)>6?'high':(r.damage_score||0)>3?'med':'low'}">${r.status==='done'?'✓ done':r.status}</span>
         </div>
-        <div class="rt-damage">${r.listing_url}</div>
+        <div class="rt-damage" style="font-size:12px;word-break:break-all;">${r.listing_url||''}</div>
         <div class="rt-footer">
-          <div class="rt-cost">Max bid: $${r.max_bid_used?.toLocaleString() || 'N/A'}</div>
+          <div class="rt-cost">${r.max_bid_used?'Max bid: $'+r.max_bid_used.toLocaleString():'analyzing...'}</div>
         </div>
-        <div class="progress-bar"><div class="progress-fill" style="width:${(r.damage_score||0)*10}%;background:${r.damage_score>6?'var(--red)':r.damage_score>3?'var(--yellow)':'var(--green)'}"></div></div>
+        <div class="progress-bar"><div class="progress-fill" style="width:${(r.damage_score||0)*10}%;background:${(r.damage_score||0)>6?'var(--red)':(r.damage_score||0)>3?'var(--yellow)':'var(--green)'}"></div></div>
       </div>
     `).join('');
   } catch(e) { console.error(e); }
 }
-function showLanding() {
-  document.getElementById('landingPage').style.display = 'block';
-  document.getElementById('dashboardPage').classList.remove('active');
-  window.scrollTo(0,0);
+
+async function showReport(reportId) {
+  const report = await apiGet(`/api/reports/${reportId}`);
+  const a = report.damage_analysis;
+  if (!a) { alert('რეპორტი ჯერ მზად არ არის'); return; }
+
+  const modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:400;overflow-y:auto;padding:32px 16px;';
+  modal.innerHTML = `
+    <div style="max-width:780px;margin:0 auto;background:#1a1a1a;border-radius:16px;padding:28px;border:1px solid rgba(245,243,238,0.08);">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
+        <div>
+          <div style="font-family:Syne,sans-serif;font-size:20px;font-weight:800;">${report.car_year||''} ${report.car_make||''} ${report.car_model||''} ${report.car_trim||''}</div>
+          <div style="color:#888;font-size:13px;margin-top:4px;">${(report.source||'').toUpperCase()} · ${report.mileage?report.mileage.toLocaleString()+' mi':''} · ${report.location||''}</div>
+        </div>
+        <button onclick="this.closest('div[style*=\"position:fixed\"]').remove()" style="background:#2a2a2a;border:none;color:#f5f3ee;width:36px;height:36px;border-radius:8px;cursor:pointer;font-size:18px;flex-shrink:0;">✕</button>
+      </div>
+
+      <div style="background:rgba(232,255,71,0.05);border:1px solid rgba(232,255,71,0.15);border-radius:10px;padding:14px;margin-bottom:20px;">
+        <div style="font-size:11px;color:#e8ff47;font-weight:500;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;">შეჯამება</div>
+        <div style="font-size:14px;color:#f5f3ee;line-height:1.6;">${a.damage_summary||''}</div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:20px;">
+        <div style="background:#111;border-radius:10px;padding:12px;text-align:center;">
+          <div style="font-size:10px;color:#888;margin-bottom:4px;text-transform:uppercase;">Damage Score</div>
+          <div style="font-family:Syne,sans-serif;font-size:26px;font-weight:800;color:${(a.damage_score||0)>6?'#ff4444':(a.damage_score||0)>3?'#ffcc44':'#44ff88'}">${a.damage_score||'-'}</div>
+        </div>
+        <div style="background:#111;border-radius:10px;padding:12px;text-align:center;">
+          <div style="font-size:10px;color:#888;margin-bottom:4px;text-transform:uppercase;">Airbag</div>
+          <div style="font-size:13px;font-weight:500;color:${a.airbag_deployed?'#ff4444':'#44ff88'}">${a.airbag_deployed?'გამოვიდა ⚠':'არ გამოვიდა ✓'}</div>
+        </div>
+        <div style="background:#111;border-radius:10px;padding:12px;text-align:center;">
+          <div style="font-size:10px;color:#888;margin-bottom:4px;text-transform:uppercase;">სტრუქტურა</div>
+          <div style="font-size:13px;font-weight:500;color:${a.structural_concern?'#ff4444':'#44ff88'}">${a.structural_concern?'საეჭვო ⚠':'კარგი ✓'}</div>
+        </div>
+        <div style="background:#111;border-radius:10px;padding:12px;text-align:center;">
+          <div style="font-size:10px;color:#888;margin-bottom:4px;text-transform:uppercase;">ძრავა</div>
+          <div style="font-size:13px;font-weight:500;color:${a.engine_ok?'#44ff88':'#ff4444'}">${a.engine_ok?'კარგი ✓':'პრობლემა ⚠'}</div>
+        </div>
+      </div>
+
+      <div style="margin-bottom:20px;">
+        <div style="font-size:11px;color:#888;font-weight:500;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;">დაზიანებები</div>
+        ${(a.damage_items||[]).map(item=>`
+          <div style="background:#111;border-radius:10px;padding:12px;margin-bottom:8px;border-left:3px solid ${item.severity==='critical'?'#ff4444':item.severity==='warning'?'#ffcc44':'#44ff88'};">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;">
+              <div style="flex:1;">
+                <div style="font-weight:500;font-size:14px;">${item.area}${item.visible===false?' <span style="font-size:11px;color:#ffcc44;background:rgba(255,204,68,0.1);padding:2px 6px;border-radius:4px;margin-left:4px;">სავარაუდო</span>':''}</div>
+                <div style="font-size:12px;color:#888;margin-top:3px;">${item.description}</div>
+              </div>
+              <div style="text-align:right;flex-shrink:0;">
+                <div style="font-size:12px;font-weight:500;">OEM: $${(item.oem_cost_low||0).toLocaleString()}–$${(item.oem_cost_high||0).toLocaleString()}</div>
+                <div style="font-size:12px;color:#44ff88;">Used: $${(item.used_cost_low||0).toLocaleString()}–$${(item.used_cost_high||0).toLocaleString()}</div>
+              </div>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;">
+        <div style="background:#111;border-radius:10px;padding:18px;">
+          <div style="font-size:11px;color:#888;margin-bottom:8px;text-transform:uppercase;">OEM ახალი ნაწილები</div>
+          <div style="font-family:Syne,sans-serif;font-size:20px;font-weight:800;">$${(a.total_oem_low||0).toLocaleString()}–$${(a.total_oem_high||0).toLocaleString()}</div>
+          <div style="font-size:12px;color:#e8ff47;margin-top:8px;">მაქს. ბიდი: $${(a.max_bid_oem||0).toLocaleString()}</div>
+        </div>
+        <div style="background:#111;border-radius:10px;padding:18px;">
+          <div style="font-size:11px;color:#888;margin-bottom:8px;text-transform:uppercase;">მეორადი ნაწილები</div>
+          <div style="font-family:Syne,sans-serif;font-size:20px;font-weight:800;color:#44ff88;">$${(a.total_used_low||0).toLocaleString()}–$${(a.total_used_high||0).toLocaleString()}</div>
+          <div style="font-size:12px;color:#e8ff47;margin-top:8px;">მაქს. ბიდი: $${(a.max_bid_used||0).toLocaleString()}</div>
+        </div>
+      </div>
+
+      ${a.notes?`<div style="background:rgba(255,204,68,0.05);border:1px solid rgba(255,204,68,0.2);border-radius:10px;padding:14px;">
+        <div style="font-size:11px;color:#ffcc44;font-weight:500;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;">⚠ შენიშვნები</div>
+        <div style="font-size:13px;color:#f5f3ee;line-height:1.6;">${a.notes}</div>
+      </div>`:''}
+    </div>
+  `;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', e => { if(e.target===modal) modal.remove(); });
 }
 
 async function startAnalysis() {
@@ -1031,11 +1120,7 @@ async function startAnalysis() {
   steps[0].classList.add('done');
   steps[1].classList.add('active');
   try {
-    const data = await fetch('https://carxray-backend-te4uf.ondigitalocean.app/api/reports/analyze', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` }  ,
-  body: JSON.stringify({ url })
-}).then(r => r.json());
+    const data = await apiPost('/api/reports/analyze', { url }, true);
     if (!data.reportId) { throw new Error(data.error || 'ანალიზი ვერ დაიწყო'); }
     steps[1].classList.remove('active'); steps[1].classList.add('done');
     steps[2].classList.add('active');
@@ -1062,7 +1147,7 @@ async function startAnalysis() {
 }
 
 // ── API CONFIG ──
-const API = '';
+const API = 'https://carxray-backend-te4uf.ondigitalocean.app';
 let authToken = localStorage.getItem('carxray_token') || null;
 let currentUser = null;
 
@@ -1080,7 +1165,7 @@ async function apiGet(path) {
 
 // ── AUTH ──
 async function loginDemo() {
-  const isLogin = document.getElementById('registerForm').style.display === 'none';
+  const isLogin = document.getElementById('loginForm').style.display !== 'none';
   if (isLogin) {
     const email = document.querySelector('#loginForm input[type="email"]').value;
     const password = document.querySelector('#loginForm input[type="password"]').value;
