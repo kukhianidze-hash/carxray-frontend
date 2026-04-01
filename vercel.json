@@ -1,8 +1,8 @@
-json{
+{
   "rewrites": [
     {
-      "source": "/api/:path*",
-      "destination": "https://carxray-backend-te4uf.ondigitalocean.app/api/:path*"
+      "source": "/api/(.*)",
+      "destination": "https://carxray-backend-te4uf.ondigitalocean.app/api/$1"
     }
   ]
 }
