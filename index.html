@@ -979,10 +979,36 @@ function switchTab(tab) {
   document.getElementById('loginForm').style.display = tab==='login'?'block':'none';
   document.getElementById('registerForm').style.display = tab==='register'?'block':'none';
 }
-function showDashboard() {
+async function showDashboard() {
   document.getElementById('landingPage').style.display = 'none';
   document.getElementById('dashboardPage').classList.add('active');
   window.scrollTo(0,0);
+  await loadReports();
+}
+
+async function loadReports() {
+  try {
+    const reports = await apiGet('/api/reports');
+    const grid = document.querySelector('.reports-grid');
+    if (!grid) return;
+    if (!reports.length) { grid.innerHTML = '<p style="color:var(--muted)">ანალიზი არ გაქვს ჯერ</p>'; return; }
+    grid.innerHTML = reports.map(r => `
+      <div class="report-thumb">
+        <div class="rt-header">
+          <div>
+            <div class="rt-car">${r.car_year || ''} ${r.car_make || ''} ${r.car_model || ''}</div>
+            <div class="rt-date">${new Date(r.created_at).toLocaleDateString()} · ${r.source?.toUpperCase()}</div>
+          </div>
+          <span class="rt-status status-${r.damage_score > 6 ? 'high' : r.damage_score > 3 ? 'med' : 'low'}">${r.status}</span>
+        </div>
+        <div class="rt-damage">${r.listing_url}</div>
+        <div class="rt-footer">
+          <div class="rt-cost">Max bid: $${r.max_bid_used?.toLocaleString() || 'N/A'}</div>
+        </div>
+        <div class="progress-bar"><div class="progress-fill" style="width:${(r.damage_score||0)*10}%;background:${r.damage_score>6?'var(--red)':r.damage_score>3?'var(--yellow)':'var(--green)'}"></div></div>
+      </div>
+    `).join('');
+  } catch(e) { console.error(e); }
 }
 function showLanding() {
   document.getElementById('landingPage').style.display = 'block';
