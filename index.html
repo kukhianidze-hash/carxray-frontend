@@ -979,10 +979,6 @@ function switchTab(tab) {
   document.getElementById('loginForm').style.display = tab==='login'?'block':'none';
   document.getElementById('registerForm').style.display = tab==='register'?'block':'none';
 }
-function loginDemo() {
-  hideModal();
-  showDashboard();
-}
 function showDashboard() {
   document.getElementById('landingPage').style.display = 'none';
   document.getElementById('dashboardPage').classList.add('active');
