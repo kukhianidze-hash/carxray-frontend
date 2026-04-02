@@ -1120,7 +1120,7 @@ async function startAnalysis() {
   steps[0].classList.add('done');
   steps[1].classList.add('active');
   try {
-    const data = await apiPost('/api/reports/analyze', { url }, true);
+    const data = await apiPost('/api/reports/analyze', { url, lang: currentLang }, true);
     if (!data.reportId) { throw new Error(data.error || 'ანალიზი ვერ დაიწყო'); }
     steps[1].classList.remove('active'); steps[1].classList.add('done');
     steps[2].classList.add('active');
