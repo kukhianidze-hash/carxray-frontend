@@ -510,6 +510,25 @@ footer{
   .rp-body{grid-template-columns:1fr;}
   .rp-damages{grid-column:span 1;}
 }
+.hero-result-preview{
+  background:rgba(0,212,255,0.05);
+  border:1px solid rgba(0,212,255,0.2);
+  padding:16px 20px;border-radius:8px;
+  font-family:'Space Mono',monospace;
+  box-shadow:0 0 30px rgba(0,212,255,0.1);
+  min-width:220px;flex-shrink:0;
+}
+.rp-bid{color:var(--green);}
+.scan-input-wrap{border:1px solid rgba(0,212,255,0.3);box-shadow:0 0 20px rgba(0,212,255,0.08);}
+.scan-input:focus{box-shadow:0 0 20px rgba(0,212,255,0.3);}
+.btn-scan{box-shadow:0 0 30px rgba(0,212,255,0.3);}
+.btn-scan:hover{box-shadow:0 0 60px rgba(0,212,255,0.7);}
+.report-thumb:hover{transform:translateY(-4px) scale(1.01);}
+.max-bid-box{
+  background:rgba(0,255,148,0.05);border:1px solid rgba(0,255,148,0.3);
+  padding:20px;border-radius:10px;text-align:center;
+}
+.max-bid-value{font-family:'Rajdhani',sans-serif;font-size:40px;color:var(--green);font-weight:700;}
 </style>
 </head>
 <body>
@@ -536,18 +555,38 @@ footer{
   <div class="hero-scanline"></div>
   <div class="hero-tag" data-en="● AI-POWERED DAMAGE DETECTION" data-ka="● AI დაზიანების ანალიზი" data-ru="● ИИ-ДИАГНОСТИКА АВТО">● AI-POWERED DAMAGE DETECTION</div>
   <h1>
-    <span class="line1" data-en="SCAN ANY CAR" data-ka="დაასკანირე">SCAN ANY CAR</span>
-    <span class="line2" data-en="LIKE AN X-RAY" data-ka="ნებისმიერი მანქანა">LIKE AN X-RAY</span>
+    <span class="line1" data-en="DON'T OVERPAY FOR" data-ka="ნუ გადაიხდი ზედმეტს" data-ru="НЕ ПЕРЕПЛАЧИВАЙ ЗА">DON'T OVERPAY FOR</span>
+    <span class="line2" data-en="DAMAGED CARS" data-ka="დაზიანებულ მანქანებზე" data-ru="ПОВРЕЖДЁННЫЕ АВТО">DAMAGED CARS</span>
   </h1>
-  <p class="hero-sub" data-en="Paste a Copart or IAAI link. AI extracts photos, scans for damage, estimates repair costs and calculates max bid." data-ka="ჩასვი Copart ან IAAI ლინკი. AI ამოიღებს ფოტოებს, დაადგენს დაზიანებებს, გამოთვლის სარემონტო ხარჯებს." data-ru="Вставьте ссылку Copart или IAAI. ИИ извлекает фото, сканирует повреждения, рассчитывает стоимость ремонта.">Paste a Copart or IAAI link. AI extracts photos, scans for damage, estimates repair costs and calculates max bid.</p>
-  <div class="scan-input-wrap">
-    <input class="scan-input" id="heroUrl" placeholder="Paste auction link here... copart.com/lot/..." type="text">
-    <button class="btn-scan" onclick="startAnalysis()" data-en="START SCAN" data-ka="სკანირება" data-ru="СКАНИРОВАТЬ">START SCAN</button>
+  <p class="hero-sub" data-en="AI scans Copart &amp; IAAI vehicles, detects hidden damage, and calculates your MAX SAFE BID instantly." data-ka="AI სკანირებს Copart და IAAI მანქანებს, პოულობს დამალულ დაზიანებებს და გიანგარიშებს მაქსიმალური ბიდის ლიმიტს." data-ru="ИИ сканирует авто с Copart и IAAI, находит скрытые повреждения и мгновенно рассчитывает безопасную максимальную ставку.">AI scans Copart &amp; IAAI vehicles, detects hidden damage, and calculates your MAX SAFE BID instantly.</p>
+
+  <div style="display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap;justify-content:center;width:100%;max-width:800px;">
+    <div style="flex:1;min-width:280px;">
+      <div class="scan-input-wrap">
+        <input class="scan-input" id="heroUrl" placeholder="https://www.copart.com/lot/..." type="text">
+        <button class="btn-scan" onclick="startAnalysis()" data-en="ANALYZE VEHICLE" data-ka="ანალიზი" data-ru="АНАЛИЗИРОВАТЬ">ANALYZE VEHICLE</button>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:10px;justify-content:flex-start;flex-wrap:wrap;">
+        <span class="sbadge sbadge-c">✓ COPART</span>
+        <span class="sbadge sbadge-i">✓ IAAI</span>
+        <button onclick="demoScan()" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);color:var(--muted);font-family:'Space Mono',monospace;font-size:11px;padding:4px 12px;border-radius:2px;cursor:pointer;letter-spacing:0.06em;transition:all 0.2s;" onmouseover="this.style.color='var(--blue)';this.style.borderColor='var(--border)'" onmouseout="this.style.color='var(--muted)';this.style.borderColor='rgba(255,255,255,0.1)'">▶ TRY DEMO</button>
+      </div>
+    </div>
+
+    <div class="hero-result-preview">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <div style="font-size:10px;color:var(--blue);font-family:'Space Mono',monospace;letter-spacing:0.1em;">AI RESULT</div>
+        <div style="font-size:10px;color:var(--green);font-family:'Space Mono',monospace;">● DONE</div>
+      </div>
+      <div style="font-size:11px;color:var(--muted);font-family:'Space Mono',monospace;margin-bottom:4px;">2024 Toyota RAV4 Hybrid</div>
+      <div style="font-size:12px;color:var(--text);font-family:'Space Mono',monospace;margin-bottom:8px;">Damage: <span style="color:var(--red);font-weight:700;">SEVERE</span></div>
+      <div style="border-top:1px solid rgba(255,255,255,0.05);padding-top:8px;">
+        <div style="font-size:12px;color:var(--blue);font-family:'Space Mono',monospace;font-weight:700;margin-bottom:4px;">$2,850 Repair Cost</div>
+        <div class="rp-bid" style="font-size:16px;font-family:'Rajdhani',sans-serif;font-weight:700;">MAX BID: $6,200</div>
+      </div>
+    </div>
   </div>
-  <div class="source-badges">
-    <span class="sbadge sbadge-c">✓ COPART</span>
-    <span class="sbadge sbadge-i">✓ IAAI</span>
-  </div>
+
   <div class="hero-stats">
     <div class="stat-item">
       <div class="stat-num">12K+</div>
@@ -983,6 +1022,12 @@ footer{
 </div>
 
 <script>
+function demoScan() {
+  document.getElementById('heroUrl').value = 'https://www.copart.com/lot/79764615/clean-title-2024-jeep-grand-wagoneer-l-series-i-nm-albuquerque';
+  if (!authToken) { showModal(); return; }
+  startAnalysis();
+}
+
 const API = 'https://carxray-backend-te4uf.ondigitalocean.app';
 let authToken = localStorage.getItem('carxray_token') || null;
 let currentUser = null;
@@ -1123,17 +1168,27 @@ async function showReport(reportId) {
           </div>
         `).join('')}
       </div>
+      <div style="background:rgba(0,255,148,0.05);border:1px solid rgba(0,255,148,0.3);border-radius:10px;padding:20px;margin-bottom:16px;text-align:center;">
+        <div style="font-size:10px;color:var(--green);font-family:'Space Mono',monospace;letter-spacing:0.12em;margin-bottom:8px;">// MAX SAFE BID (USED PARTS)</div>
+        <div style="font-family:'Rajdhani',sans-serif;font-size:48px;font-weight:700;color:var(--green);line-height:1;">$${(a.max_bid_used||0).toLocaleString()}</div>
+        <div style="font-size:11px;color:var(--muted);font-family:'Space Mono',monospace;margin-top:6px;">do not bid above this amount</div>
+      </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;">
-        <div style="background:var(--bg);border-radius:8px;padding:18px;border:1px solid var(--border2);">
-          <div style="font-size:10px;color:var(--muted);margin-bottom:8px;text-transform:uppercase;font-family:'Space Mono',monospace;">OEM PARTS</div>
-          <div style="font-family:'Rajdhani',sans-serif;font-size:22px;font-weight:700;color:var(--blue);">$${(a.total_oem_low||0).toLocaleString()}–$${(a.total_oem_high||0).toLocaleString()}</div>
-          <div style="font-size:11px;color:var(--muted);margin-top:6px;font-family:'Space Mono',monospace;">MAX BID → $${(a.max_bid_oem||0).toLocaleString()}</div>
+        <div style="background:var(--bg);border-radius:8px;padding:16px;border:1px solid var(--border2);">
+          <div style="font-size:10px;color:var(--muted);margin-bottom:6px;text-transform:uppercase;font-family:'Space Mono',monospace;">REPAIR (OEM)</div>
+          <div style="font-family:'Rajdhani',sans-serif;font-size:20px;font-weight:700;color:var(--blue);">$${(a.total_oem_low||0).toLocaleString()}–$${(a.total_oem_high||0).toLocaleString()}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px;font-family:'Space Mono',monospace;">max bid: $${(a.max_bid_oem||0).toLocaleString()}</div>
         </div>
-        <div style="background:var(--bg);border-radius:8px;padding:18px;border:1px solid var(--border2);">
-          <div style="font-size:10px;color:var(--muted);margin-bottom:8px;text-transform:uppercase;font-family:'Space Mono',monospace;">USED PARTS</div>
-          <div style="font-family:'Rajdhani',sans-serif;font-size:22px;font-weight:700;color:var(--green);">$${(a.total_used_low||0).toLocaleString()}–$${(a.total_used_high||0).toLocaleString()}</div>
-          <div style="font-size:11px;color:var(--muted);margin-top:6px;font-family:'Space Mono',monospace;">MAX BID → $${(a.max_bid_used||0).toLocaleString()}</div>
+        <div style="background:var(--bg);border-radius:8px;padding:16px;border:1px solid var(--border2);">
+          <div style="font-size:10px;color:var(--muted);margin-bottom:6px;text-transform:uppercase;font-family:'Space Mono',monospace;">REPAIR (USED)</div>
+          <div style="font-family:'Rajdhani',sans-serif;font-size:20px;font-weight:700;color:var(--green);">$${(a.total_used_low||0).toLocaleString()}–$${(a.total_used_high||0).toLocaleString()}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px;font-family:'Space Mono',monospace;">market value: $${(a.market_value||0).toLocaleString()}</div>
         </div>
+      </div>
+      <div class="max-bid-box" style="background:rgba(0,255,148,0.05);border:1px solid rgba(0,255,148,0.3);padding:20px;border-radius:10px;text-align:center;margin-bottom:20px;">
+        <div style="font-size:11px;color:var(--muted);font-family:'Space Mono',monospace;letter-spacing:0.1em;margin-bottom:8px;">MAX SAFE BID (USED PARTS)</div>
+        <div class="max-bid-value" style="font-family:'Rajdhani',sans-serif;font-size:44px;color:var(--green);font-weight:700;">$${(a.max_bid_used||0).toLocaleString()}</div>
+        <div style="font-size:11px;color:var(--muted);font-family:'Space Mono',monospace;margin-top:6px;">Market value: $${(a.market_value||0).toLocaleString()} · Repair: $${(a.total_used_high||0).toLocaleString()}</div>
       </div>
       ${a.notes?`<div style="background:rgba(255,59,59,0.04);border:1px solid rgba(255,59,59,0.15);border-radius:8px;padding:14px;">
         <div style="font-size:10px;color:var(--red);font-family:'Space Mono',monospace;margin-bottom:6px;">// MUST CHECK BEFORE BIDDING</div>
@@ -1143,6 +1198,12 @@ async function showReport(reportId) {
   `;
   document.body.appendChild(modal);
   modal.addEventListener('click', e => { if(e.target===modal) modal.remove(); });
+}
+
+function demoScan() {
+  const input = document.getElementById('heroUrl');
+  if (input) input.value = 'https://www.copart.com/lot/79764615';
+  startAnalysis();
 }
 
 async function loginDemo() {
