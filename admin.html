@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CarXray Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Space+Mono:wght@400;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#080C12;--bg2:#0D1320;--bg3:#111827;
+  --blue:#00D4FF;--blue-dim:rgba(0,212,255,0.08);--border:rgba(0,212,255,0.12);--border2:rgba(255,255,255,0.06);
+  --red:#FF3B3B;--green:#00FF94;--yellow:#FFD700;
+  --text:#E8EDF5;--muted:#6B7A99;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-size:14px;}
+nav{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:16px 32px;background:var(--bg2);border-bottom:1px solid var(--border);
+}
+.logo{font-family:'Rajdhani',sans-serif;font-size:20px;font-weight:700;letter-spacing:2px;}
+.logo span{color:var(--blue);}
+.nav-badge{background:rgba(255,59,59,0.1);border:1px solid rgba(255,59,59,0.3);color:var(--red);font-size:10px;font-family:'Space Mono',monospace;padding:3px 10px;border-radius:2px;letter-spacing:0.08em;}
+.layout{display:flex;min-height:calc(100vh - 57px);}
+.sidebar{
+  width:220px;background:var(--bg2);border-right:1px solid var(--border2);
+  padding:24px 0;flex-shrink:0;
+}
+.sidebar-item{
+  display:flex;align-items:center;gap:10px;
+  padding:12px 24px;font-size:12px;font-family:'Space Mono',monospace;
+  color:var(--muted);cursor:pointer;transition:all 0.2s;letter-spacing:0.06em;
+  border-left:2px solid transparent;
+}
+.sidebar-item:hover{color:var(--text);background:var(--blue-dim);}
+.sidebar-item.active{color:var(--blue);border-left-color:var(--blue);background:var(--blue-dim);}
+.content{flex:1;padding:32px;overflow-y:auto;}
+.page{display:none;}
+.page.active{display:block;}
+h2{font-family:'Rajdhani',sans-serif;font-size:24px;font-weight:700;letter-spacing:0.5px;margin-bottom:24px;}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:32px;}
+.stat-card{
+  background:var(--bg2);border:1px solid var(--border2);border-radius:8px;padding:20px;
+  position:relative;overflow:hidden;
+}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--blue),transparent);}
+.stat-label{font-size:10px;color:var(--muted);font-family:'Space Mono',monospace;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:8px;}
+.stat-val{font-family:'Rajdhani',sans-serif;font-size:36px;font-weight:700;color:var(--blue);}
+.stat-sub{font-size:11px;color:var(--muted);font-family:'Space Mono',monospace;margin-top:4px;}
+table{width:100%;border-collapse:collapse;}
+th{text-align:left;font-size:10px;font-family:'Space Mono',monospace;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase;padding:10px 12px;border-bottom:1px solid var(--border2);}
+td{padding:12px;border-bottom:1px solid var(--border2);font-size:13px;vertical-align:middle;}
+tr:hover td{background:rgba(255,255,255,0.02);}
+.badge{font-size:10px;padding:3px 8px;border-radius:2px;font-family:'Space Mono',monospace;letter-spacing:0.04em;}
+.badge-admin{background:rgba(0,212,255,0.1);color:var(--blue);border:1px solid rgba(0,212,255,0.2);}
+.badge-user{background:rgba(255,255,255,0.04);color:var(--muted);border:1px solid var(--border2);}
+.badge-free{background:rgba(255,255,255,0.04);color:var(--muted);border:1px solid var(--border2);}
+.badge-pro{background:rgba(0,212,255,0.08);color:var(--blue);border:1px solid rgba(0,212,255,0.15);}
+.btn{
+  padding:7px 14px;border-radius:4px;font-size:11px;font-family:'Space Mono',monospace;
+  cursor:pointer;border:none;letter-spacing:0.06em;transition:all 0.2s;
+}
+.btn-blue{background:var(--blue);color:var(--bg);}
+.btn-blue:hover{box-shadow:0 0 15px rgba(0,212,255,0.3);}
+.btn-green{background:rgba(0,255,148,0.1);color:var(--green);border:1px solid rgba(0,255,148,0.25);}
+.btn-green:hover{background:rgba(0,255,148,0.15);}
+.btn-red{background:rgba(255,59,59,0.1);color:var(--red);border:1px solid rgba(255,59,59,0.25);}
+.btn-red:hover{background:rgba(255,59,59,0.15);}
+.btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border2);}
+.btn-ghost:hover{border-color:var(--blue);color:var(--blue);}
+.card{background:var(--bg2);border:1px solid var(--border2);border-radius:8px;padding:24px;margin-bottom:20px;}
+.form-row{display:flex;gap:12px;align-items:center;flex-wrap:wrap;}
+.form-group{display:flex;flex-direction:column;gap:6px;}
+.form-label{font-size:10px;color:var(--muted);font-family:'Space Mono',monospace;letter-spacing:0.08em;text-transform:uppercase;}
+.form-input{
+  background:var(--bg3);border:1px solid var(--border2);color:var(--text);
+  font-family:'Space Mono',monospace;font-size:13px;padding:9px 12px;border-radius:6px;
+  outline:none;width:160px;
+}
+.form-input:focus{border-color:rgba(0,212,255,0.4);}
+.credits-input{width:80px;}
+.section-tag{font-family:'Space Mono',monospace;font-size:10px;color:var(--blue);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:12px;}
+.credits-badge{
+  display:inline-flex;align-items:center;gap:4px;
+  background:rgba(0,212,255,0.08);border:1px solid rgba(0,212,255,0.15);
+  color:var(--blue);font-family:'Space Mono',monospace;font-size:11px;
+  padding:3px 8px;border-radius:2px;
+}
+.toast{
+  position:fixed;bottom:24px;right:24px;
+  background:var(--bg2);border:1px solid var(--green);
+  color:var(--green);font-family:'Space Mono',monospace;font-size:12px;
+  padding:12px 20px;border-radius:6px;z-index:999;
+  transform:translateY(100px);transition:transform 0.3s;
+}
+.toast.show{transform:translateY(0);}
+.search-input{
+  background:var(--bg3);border:1px solid var(--border2);color:var(--text);
+  font-family:'Space Mono',monospace;font-size:12px;padding:9px 14px;border-radius:6px;
+  outline:none;width:280px;margin-bottom:16px;
+}
+.search-input:focus{border-color:rgba(0,212,255,0.3);}
+.pricing-card{
+  background:var(--bg2);border:1px solid var(--border2);border-radius:8px;padding:24px;
+  display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;
+  margin-bottom:12px;transition:border-color 0.2s;
+}
+.pricing-card:hover{border-color:var(--border);}
+.pricing-name{font-family:'Rajdhani',sans-serif;font-size:18px;font-weight:700;letter-spacing:0.5px;}
+.pricing-val{font-family:'Rajdhani',sans-serif;font-size:32px;font-weight:700;color:var(--blue);}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">CAR<span>XRAY</span>.AI</div>
+  <div style="display:flex;align-items:center;gap:12px;">
+    <span class="nav-badge">ADMIN PANEL</span>
+    <span style="font-size:11px;color:var(--muted);font-family:'Space Mono',monospace;" id="adminEmail">—</span>
+    <button class="btn btn-ghost" onclick="logout()">LOGOUT</button>
+  </div>
+</nav>
+
+<div class="layout">
+  <div class="sidebar">
+    <div class="sidebar-item active" onclick="showPage('dashboard')">📊 DASHBOARD</div>
+    <div class="sidebar-item" onclick="showPage('users')">👥 USERS</div>
+    <div class="sidebar-item" onclick="showPage('pricing')">💰 PRICING</div>
+    <div class="sidebar-item" onclick="showPage('reports')">📋 REPORTS</div>
+  </div>
+
+  <div class="content">
+
+    <!-- DASHBOARD -->
+    <div class="page active" id="page-dashboard">
+      <h2>OVERVIEW</h2>
+      <div class="stats-grid" id="statsGrid">
+        <div class="stat-card"><div class="stat-label">TOTAL USERS</div><div class="stat-val" id="stat-users">—</div></div>
+        <div class="stat-card"><div class="stat-label">TOTAL REPORTS</div><div class="stat-val" id="stat-reports">—</div></div>
+        <div class="stat-card"><div class="stat-label">COMPLETED</div><div class="stat-val" id="stat-completed">—</div></div>
+        <div class="stat-card"><div class="stat-label">TODAY REPORTS</div><div class="stat-val" id="stat-today">—</div><div class="stat-sub" id="stat-users-today"></div></div>
+      </div>
+
+      <div class="card">
+        <div class="section-tag">// QUICK ACTIONS</div>
+        <div class="form-row">
+          <div class="form-group">
+            <div class="form-label">USER EMAIL</div>
+            <input class="form-input" id="quickEmail" placeholder="user@example.com" type="email">
+          </div>
+          <div class="form-group">
+            <div class="form-label">CREDITS</div>
+            <input class="form-input credits-input" id="quickCredits" type="number" value="5" min="1">
+          </div>
+          <button class="btn btn-green" style="margin-top:20px;" onclick="giftCreditsByEmail()">GIFT CREDITS</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- USERS -->
+    <div class="page" id="page-users">
+      <h2>USERS</h2>
+      <input class="search-input" id="userSearch" placeholder="Search by email or name..." oninput="filterUsers()">
+      <div style="overflow-x:auto;">
+        <table id="usersTable">
+          <thead>
+            <tr>
+              <th>EMAIL</th>
+              <th>NAME</th>
+              <th>PLAN</th>
+              <th>ROLE</th>
+              <th>CREDITS</th>
+              <th>REPORTS</th>
+              <th>JOINED</th>
+              <th>ACTIONS</th>
+            </tr>
+          </thead>
+          <tbody id="usersBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- PRICING -->
+    <div class="page" id="page-pricing">
+      <h2>PRICING CONFIG</h2>
+      <div id="pricingList"></div>
+      <div class="card" style="margin-top:20px;">
+        <div class="section-tag">// ADD / UPDATE PLAN</div>
+        <div class="form-row">
+          <div class="form-group">
+            <div class="form-label">PLAN NAME</div>
+            <input class="form-input" id="pricePlan" placeholder="single / pro / dealer">
+          </div>
+          <div class="form-group">
+            <div class="form-label">PRICE ($)</div>
+            <input class="form-input credits-input" id="priceVal" type="number" placeholder="9">
+          </div>
+          <div class="form-group">
+            <div class="form-label">CREDITS</div>
+            <input class="form-input credits-input" id="priceCredits" type="number" placeholder="1">
+          </div>
+          <button class="btn btn-blue" style="margin-top:20px;" onclick="savePricing()">SAVE</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- REPORTS -->
+    <div class="page" id="page-reports">
+      <h2>ALL REPORTS</h2>
+      <div style="overflow-x:auto;">
+        <table id="reportsTable">
+          <thead>
+            <tr>
+              <th>CAR</th>
+              <th>USER</th>
+              <th>SOURCE</th>
+              <th>STATUS</th>
+              <th>SCORE</th>
+              <th>MAX BID</th>
+              <th>DATE</th>
+            </tr>
+          </thead>
+          <tbody id="reportsBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- LOGIN OVERLAY -->
+<div id="loginOverlay" style="position:fixed;inset:0;background:var(--bg);z-index:500;display:flex;align-items:center;justify-content:center;">
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:40px;width:100%;max-width:380px;position:relative;overflow:hidden;">
+    <div style="position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--blue),transparent);"></div>
+    <div style="font-family:'Rajdhani',sans-serif;font-size:22px;font-weight:700;letter-spacing:1px;margin-bottom:6px;">CAR<span style="color:var(--blue);">XRAY</span>.AI</div>
+    <div style="font-size:10px;color:var(--muted);font-family:'Space Mono',monospace;margin-bottom:24px;letter-spacing:0.1em;">// ADMIN ACCESS</div>
+    <div style="margin-bottom:12px;">
+      <div class="form-label" style="margin-bottom:6px;">EMAIL</div>
+      <input class="form-input" id="loginEmail" type="email" placeholder="admin@carxray.ai" style="width:100%;">
+    </div>
+    <div style="margin-bottom:20px;">
+      <div class="form-label" style="margin-bottom:6px;">PASSWORD</div>
+      <input class="form-input" id="loginPassword" type="password" placeholder="••••••••" style="width:100%;" onkeydown="if(event.key==='Enter')adminLogin()">
+    </div>
+    <button class="btn btn-blue" style="width:100%;padding:12px;font-size:12px;" onclick="adminLogin()">SIGN IN →</button>
+  </div>
+</div>
+
+<script>
+const API = 'https://carxray-backend-te4uf.ondigitalocean.app';
+let token = localStorage.getItem('admin_token') || null;
+let allUsers = [];
+
+async function apiGet(path) {
+  const res = await fetch(API + path, { headers: { 'Authorization': `Bearer ${token}` } });
+  return res.json();
+}
+async function apiPost(path, body) {
+  const res = await fetch(API + path, {
+    method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+    body: JSON.stringify(body)
+  });
+  return res.json();
+}
+async function apiDelete(path) {
+  const res = await fetch(API + path, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
+  return res.json();
+}
+
+function showToast(msg, color = 'var(--green)') {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.style.borderColor = color; t.style.color = color;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.sidebar-item').forEach(s => s.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  document.querySelectorAll('.sidebar-item').forEach(s => {
+    if (s.textContent.toLowerCase().includes(name.substring(0,4))) s.classList.add('active');
+  });
+  if (name === 'users') loadUsers();
+  if (name === 'pricing') loadPricing();
+  if (name === 'reports') loadReports();
+}
+
+async function adminLogin() {
+  const email = document.getElementById('loginEmail').value;
+  const password = document.getElementById('loginPassword').value;
+  if (!email || !password) return;
+  const btn = document.querySelector('#loginOverlay .btn-blue');
+  btn.textContent = 'LOADING...';
+  const data = await fetch(API + '/api/auth/login', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password })
+  }).then(r => r.json());
+  btn.textContent = 'SIGN IN →';
+  if (data.token) {
+    if (data.user.role !== 'admin') { alert('Admin access required'); return; }
+    token = data.token;
+    localStorage.setItem('admin_token', token);
+    document.getElementById('loginOverlay').style.display = 'none';
+    document.getElementById('adminEmail').textContent = data.user.email;
+    loadStats();
+  } else { alert(data.error || 'Login failed'); }
+}
+
+function logout() {
+  localStorage.removeItem('admin_token');
+  token = null;
+  document.getElementById('loginOverlay').style.display = 'flex';
+}
+
+async function loadStats() {
+  const data = await apiGet('/api/admin/stats');
+  document.getElementById('stat-users').textContent = data.total_users || 0;
+  document.getElementById('stat-reports').textContent = data.total_reports || 0;
+  document.getElementById('stat-completed').textContent = data.completed_reports || 0;
+  document.getElementById('stat-today').textContent = data.reports_today || 0;
+  document.getElementById('stat-users-today').textContent = `+${data.users_today || 0} new users`;
+}
+
+async function loadUsers() {
+  const users = await apiGet('/api/admin/users');
+  allUsers = users;
+  renderUsers(users);
+}
+
+function renderUsers(users) {
+  const tbody = document.getElementById('usersBody');
+  tbody.innerHTML = users.map(u => `
+    <tr>
+      <td style="font-family:'Space Mono',monospace;font-size:12px;">${u.email}</td>
+      <td>${u.name || '—'}</td>
+      <td><span class="badge badge-${u.plan}">${(u.plan||'free').toUpperCase()}</span></td>
+      <td><span class="badge badge-${u.role||'user'}">${(u.role||'user').toUpperCase()}</span></td>
+      <td><span class="credits-badge">${u.credits || 0}</span></td>
+      <td style="color:var(--muted);">${u.report_count || 0}</td>
+      <td style="font-size:11px;color:var(--muted);font-family:'Space Mono',monospace;">${new Date(u.created_at).toLocaleDateString()}</td>
+      <td>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <input type="number" min="1" max="999" value="5" style="width:50px;background:var(--bg3);border:1px solid var(--border2);color:var(--text);font-family:'Space Mono',monospace;font-size:11px;padding:4px 6px;border-radius:4px;outline:none;" id="cr-${u.id}">
+          <button class="btn btn-green" onclick="giftCredits('${u.id}')">GIFT</button>
+          <button class="btn btn-red" onclick="deleteUser('${u.id}', '${u.email}')">DEL</button>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function filterUsers() {
+  const q = document.getElementById('userSearch').value.toLowerCase();
+  renderUsers(allUsers.filter(u => u.email.toLowerCase().includes(q) || (u.name||'').toLowerCase().includes(q)));
+}
+
+async function giftCredits(userId) {
+  const amount = parseInt(document.getElementById('cr-' + userId).value) || 5;
+  const data = await apiPost(`/api/admin/users/${userId}/credits`, { amount });
+  if (data.success) { showToast(`✓ ${amount} credits gifted to ${data.user.email}`); loadUsers(); }
+  else showToast(data.error, 'var(--red)');
+}
+
+async function giftCreditsByEmail() {
+  const email = document.getElementById('quickEmail').value;
+  const amount = parseInt(document.getElementById('quickCredits').value) || 5;
+  if (!email) { showToast('Enter email', 'var(--yellow)'); return; }
+  const users = await apiGet('/api/admin/users');
+  const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
+  if (!user) { showToast('User not found', 'var(--red)'); return; }
+  const data = await apiPost(`/api/admin/users/${user.id}/credits`, { amount });
+  if (data.success) { showToast(`✓ ${amount} credits gifted to ${email}`); document.getElementById('quickEmail').value = ''; }
+  else showToast(data.error, 'var(--red)');
+}
+
+async function deleteUser(userId, email) {
+  if (!confirm(`Delete user ${email}? This cannot be undone.`)) return;
+  const data = await apiDelete(`/api/admin/users/${userId}`);
+  if (data.success) { showToast('✓ User deleted'); loadUsers(); }
+  else showToast(data.error, 'var(--red)');
+}
+
+async function loadPricing() {
+  const pricing = await apiGet('/api/admin/pricing');
+  const list = document.getElementById('pricingList');
+  list.innerHTML = pricing.map(p => `
+    <div class="pricing-card">
+      <div>
+        <div class="pricing-name">${p.plan.toUpperCase()}</div>
+        <div style="font-size:11px;color:var(--muted);font-family:'Space Mono',monospace;">${p.credits} credits</div>
+      </div>
+      <div class="pricing-val">$${p.price}</div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <input type="number" value="${p.price}" style="width:70px;background:var(--bg3);border:1px solid var(--border2);color:var(--text);font-family:'Space Mono',monospace;font-size:13px;padding:7px 10px;border-radius:4px;outline:none;" id="pp-${p.plan}">
+        <input type="number" value="${p.credits}" style="width:70px;background:var(--bg3);border:1px solid var(--border2);color:var(--text);font-family:'Space Mono',monospace;font-size:13px;padding:7px 10px;border-radius:4px;outline:none;" id="pc-${p.plan}">
+        <button class="btn btn-blue" onclick="updatePricing('${p.plan}')">UPDATE</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function updatePricing(plan) {
+  const price = parseInt(document.getElementById('pp-' + plan).value);
+  const credits = parseInt(document.getElementById('pc-' + plan).value);
+  const data = await apiPost('/api/admin/pricing', { plan, price, credits });
+  if (data.success) { showToast(`✓ ${plan} pricing updated`); loadPricing(); }
+  else showToast(data.error, 'var(--red)');
+}
+
+async function savePricing() {
+  const plan = document.getElementById('pricePlan').value;
+  const price = parseInt(document.getElementById('priceVal').value);
+  const credits = parseInt(document.getElementById('priceCredits').value);
+  if (!plan || !price || !credits) { showToast('Fill all fields', 'var(--yellow)'); return; }
+  const data = await apiPost('/api/admin/pricing', { plan, price, credits });
+  if (data.success) { showToast(`✓ ${plan} saved`); loadPricing(); }
+}
+
+async function loadReports() {
+  const reports = await apiGet('/api/admin/reports');
+  const tbody = document.getElementById('reportsBody');
+  if (!reports || reports.error) { tbody.innerHTML = '<tr><td colspan="7" style="color:var(--muted);text-align:center;padding:20px;">No reports</td></tr>'; return; }
+  tbody.innerHTML = reports.map(r => `
+    <tr>
+      <td style="font-weight:500;">${r.car_year||''} ${r.car_make||''} ${r.car_model||''}</td>
+      <td style="font-family:'Space Mono',monospace;font-size:11px;color:var(--muted);">${r.user_email||'—'}</td>
+      <td><span class="badge badge-${r.source}">${(r.source||'').toUpperCase()}</span></td>
+      <td><span style="color:${r.status==='done'?'var(--green)':r.status==='failed'?'var(--red)':'var(--yellow)'};">${(r.status||'').toUpperCase()}</span></td>
+      <td style="color:${(r.damage_score||0)>6?'var(--red)':(r.damage_score||0)>3?'var(--yellow)':'var(--green)'};">${r.damage_score||'—'}</td>
+      <td style="font-family:'Rajdhani',sans-serif;font-size:16px;font-weight:700;color:var(--green);">${r.max_bid_used?'$'+r.max_bid_used.toLocaleString():'—'}</td>
+      <td style="font-size:11px;color:var(--muted);font-family:'Space Mono',monospace;">${new Date(r.created_at).toLocaleDateString()}</td>
+    </tr>
+  `).join('');
+}
+
+window.addEventListener('load', async () => {
+  if (token) {
+    const data = await fetch(API + '/api/auth/me', { headers: { 'Authorization': `Bearer ${token}` } }).then(r => r.json());
+    if (data.user && data.user.role === 'admin') {
+      document.getElementById('loginOverlay').style.display = 'none';
+      document.getElementById('adminEmail').textContent = data.user.email;
+      loadStats();
+    } else { localStorage.removeItem('admin_token'); token = null; }
+  }
+});
+</script>
+</body>
+</html>
