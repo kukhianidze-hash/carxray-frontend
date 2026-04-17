@@ -1252,6 +1252,7 @@ async function startAnalysis() {
   if (!url) { alert('Paste a Copart or IAAI link'); return; }
   if (!url.includes('copart.com') && !url.includes('iaai.com')) { alert('Only Copart or IAAI links'); return; }
   const overlay = document.getElementById('analyzingOverlay');
+  document.body.appendChild(overlay);
   overlay.classList.add('active');
   const steps = overlay.querySelectorAll('.analyzing-step');
   steps.forEach(s => { s.className='analyzing-step'; });
