@@ -1027,18 +1027,6 @@ footer{
   </div>
 </div>
 
-<!-- ANALYZING OVERLAY -->
-<div class="analyzing-overlay" id="analyzingOverlay">
-  <div class="scan-ring"></div>
-  <div class="analyzing-text" data-en="SCANNING VEHICLE..." data-ka="სკანირება..." data-ru="СКАНИРОВАНИЕ...">SCANNING VEHICLE...</div>
-  <div class="analyzing-steps">
-    <div class="analyzing-step done" data-en="Fetching listing photos" data-ka="ფოტოების ჩამოტვირთვა" data-ru="Загрузка фото">Fetching listing photos</div>
-    <div class="analyzing-step active" data-en="Searching parts diagrams" data-ka="ნაწილების დიაგრამები" data-ru="Поиск схем деталей">Searching parts diagrams</div>
-    <div class="analyzing-step" data-en="AI damage detection" data-ka="დაზიანებების გამოვლენა" data-ru="Обнаружение повреждений">AI damage detection</div>
-    <div class="analyzing-step" data-en="Calculating repair costs" data-ka="ხარჯების გაანგარიშება" data-ru="Расчёт стоимости">Calculating repair costs</div>
-  </div>
-</div>
-
 <script>
 function demoScan() {
   document.getElementById('heroUrl').value = 'https://www.copart.com/lot/79764615/clean-title-2024-jeep-grand-wagoneer-l-series-i-nm-albuquerque';
@@ -1327,5 +1315,16 @@ setInterval(() => {
   if (fill) fill.style.width = pct + '%';
 }, 80);
 </script>
+<!-- ANALYZING OVERLAY -->
+<div class="analyzing-overlay" id="analyzingOverlay">
+  <div class="scan-ring"></div>
+  <div class="analyzing-text" data-en="SCANNING VEHICLE..." data-ka="სკანირება..." data-ru="СКАНИРОВАНИЕ...">SCANNING VEHICLE...</div>
+  <div class="analyzing-steps">
+    <div class="analyzing-step done" data-en="Fetching listing photos" data-ka="ფოტოების ჩამოტვირთვა" data-ru="Загрузка фото">Fetching listing photos</div>
+    <div class="analyzing-step active" data-en="Searching parts diagrams" data-ka="ნაწილების დიაგრამები" data-ru="Поиск схем деталей">Searching parts diagrams</div>
+    <div class="analyzing-step" data-en="AI damage detection" data-ka="დაზიანებების გამოვლენა" data-ru="Обнаружение повреждений">AI damage detection</div>
+    <div class="analyzing-step" data-en="Calculating repair costs" data-ka="ხარჯების გაანგარიშება" data-ru="Расчёт стоимости">Calculating repair costs</div>
+  </div>
+</div>
 </body>
 </html>
