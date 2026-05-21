@@ -1174,27 +1174,17 @@ async function showReport(reportId) {
           </div>
         `).join('')}
       </div>
-      <div style="background:rgba(0,255,148,0.05);border:1px solid rgba(0,255,148,0.3);border-radius:10px;padding:20px;margin-bottom:16px;text-align:center;">
-        <div style="font-size:10px;color:var(--green);font-family:'Space Mono',monospace;letter-spacing:0.12em;margin-bottom:8px;">// MAX SAFE BID (USED PARTS)</div>
-        <div style="font-family:'Rajdhani',sans-serif;font-size:48px;font-weight:700;color:var(--green);line-height:1;">$${(a.max_bid_used||0).toLocaleString()}</div>
-        <div style="font-size:11px;color:var(--muted);font-family:'Space Mono',monospace;margin-top:6px;">do not bid above this amount</div>
-      </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;">
         <div style="background:var(--bg);border-radius:8px;padding:16px;border:1px solid var(--border2);">
-          <div style="font-size:10px;color:var(--muted);margin-bottom:6px;text-transform:uppercase;font-family:'Space Mono',monospace;">REPAIR (OEM)</div>
-          <div style="font-family:'Rajdhani',sans-serif;font-size:20px;font-weight:700;color:var(--blue);">$${(a.total_oem_low||0).toLocaleString()}–$${(a.total_oem_high||0).toLocaleString()}</div>
-          <div style="font-size:11px;color:var(--muted);margin-top:4px;font-family:'Space Mono',monospace;">max bid: $${(a.max_bid_oem||0).toLocaleString()}</div>
+          <div style="font-size:10px;color:var(--muted);margin-bottom:6px;text-transform:uppercase;font-family:'Space Mono',monospace;">// გაკეთების ხარჯი (OEM)</div>
+          <div style="font-family:'Rajdhani',sans-serif;font-size:24px;font-weight:700;color:var(--blue);">$${(a.total_oem_low||0).toLocaleString()}–$${(a.total_oem_high||0).toLocaleString()}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px;font-family:'Space Mono',monospace;">ახალი ნაწილებით</div>
         </div>
         <div style="background:var(--bg);border-radius:8px;padding:16px;border:1px solid var(--border2);">
-          <div style="font-size:10px;color:var(--muted);margin-bottom:6px;text-transform:uppercase;font-family:'Space Mono',monospace;">REPAIR (USED)</div>
-          <div style="font-family:'Rajdhani',sans-serif;font-size:20px;font-weight:700;color:var(--green);">$${(a.total_used_low||0).toLocaleString()}–$${(a.total_used_high||0).toLocaleString()}</div>
-          <div style="font-size:11px;color:var(--muted);margin-top:4px;font-family:'Space Mono',monospace;">market value: $${(a.market_value||0).toLocaleString()}</div>
+          <div style="font-size:10px;color:var(--muted);margin-bottom:6px;text-transform:uppercase;font-family:'Space Mono',monospace;">// გაკეთების ხარჯი (მეორადი)</div>
+          <div style="font-family:'Rajdhani',sans-serif;font-size:24px;font-weight:700;color:var(--green);">$${(a.total_used_low||0).toLocaleString()}–$${(a.total_used_high||0).toLocaleString()}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px;font-family:'Space Mono',monospace;">მეორადი ნაწილებით</div>
         </div>
-      </div>
-      <div class="max-bid-box" style="background:rgba(0,255,148,0.05);border:1px solid rgba(0,255,148,0.3);padding:20px;border-radius:10px;text-align:center;margin-bottom:20px;">
-        <div style="font-size:11px;color:var(--muted);font-family:'Space Mono',monospace;letter-spacing:0.1em;margin-bottom:8px;">MAX SAFE BID (USED PARTS)</div>
-        <div class="max-bid-value" style="font-family:'Rajdhani',sans-serif;font-size:44px;color:var(--green);font-weight:700;">$${(a.max_bid_used||0).toLocaleString()}</div>
-        <div style="font-size:11px;color:var(--muted);font-family:'Space Mono',monospace;margin-top:6px;">Market value: $${(a.market_value||0).toLocaleString()} · Repair: $${(a.total_used_high||0).toLocaleString()}</div>
       </div>
       ${a.notes?`<div style="background:rgba(255,59,59,0.04);border:1px solid rgba(255,59,59,0.15);border-radius:8px;padding:14px;">
         <div style="font-size:10px;color:var(--red);font-family:'Space Mono',monospace;margin-bottom:6px;">// MUST CHECK BEFORE BIDDING</div>
